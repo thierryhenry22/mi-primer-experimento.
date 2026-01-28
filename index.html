@@ -12,115 +12,145 @@
             color: white;
             font-family: 'Segoe UI', sans-serif;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
-            text-align: center;
             transition: background 0.5s ease;
         }
-        #particles-js {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
-        .content {
-            position: relative;
-            z-index: 2;
-            padding: 30px;
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 234, 255, 0.3);
-        }
-        h1 {
-            font-size: 3.5rem;
-            margin-bottom: 10px;
-            background: linear-gradient(45deg, #00d2ff, #9d50bb);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            transition: all 0.3s ease;
-        }
-        .neon-text {
-            text-shadow: 0 0 10px #ff00de, 0 0 20px #ff00de;
-            background: linear-gradient(45deg, #ff00de, #ff4b2b) !important;
-            -webkit-background-clip: text !important;
-        }
-        .buttons-container {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-        }
-        button {
-            padding: 15px 25px;
-            font-size: 1rem;
-            border: none;
-            border-radius: 10px;
+
+        /* --- MENÚ DE TRES LÍNEAS (HAMBURGUESA) --- */
+        .menu-icon {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
             cursor: pointer;
-            transition: 0.3s;
-            font-weight: bold;
-            text-transform: uppercase;
+            padding: 10px;
+            background: rgba(0, 210, 255, 0.2);
+            border-radius: 5px;
         }
-        .btn-main { background: #00eaff; color: #0d0d1a; }
-        .btn-alt { background: #9d50bb; color: white; }
+        .menu-icon div {
+            width: 30px;
+            height: 4px;
+            background-color: #00eaff;
+            margin: 5px 0;
+            transition: 0.4s;
+        }
+
+        /* --- BARRA LATERAL (SIDEBAR) --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -250px; /* Escondida por defecto */
+            width: 250px;
+            height: 100%;
+            background: rgba(13, 13, 26, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 2px 0 15px rgba(0,0,0,0.5);
+            transition: 0.5s;
+            z-index: 99;
+            padding-top: 80px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+        .sidebar.active {
+            left: 0; /* Se muestra al activar */
+        }
+
+        .sidebar h3 { color: #00eaff; margin-bottom: 10px; }
+
+        .color-opt {
+            width: 80%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        /* --- ESTILOS DE LA PÁGINA --- */
+        #particles-js { position: absolute; width: 100%; height: 100%; z-index: 1; }
+        .content { position: relative; z-index: 2; text-align: center; }
+        h1 { font-size: 3rem; text-shadow: 0 0 20px #00d2ff; }
         
-        button:hover { transform: scale(1.05); filter: brightness(1.2); }
+        /* Colores de botones del menú */
+        .btn-neon { background: #ff00de; }
+        .btn-cyan { background: #00eaff; color: #0d0d1a; }
+        .btn-gold { background: #fdbb2d; color: #0d0d1a; }
     </style>
 </head>
 <body>
+
+    <div class="menu-icon" onclick="toggleMenu()">
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+
+    <div class="sidebar" id="mySidebar">
+        <h3>Panel de Energía</h3>
+        <button class="color-opt btn-cyan" onclick="changeTheme('cyan')">Modo Espacio</button>
+        <button class="color-opt btn-neon" onclick="changeTheme('neon')">Modo Neón</button>
+        <button class="color-opt btn-gold" onclick="changeTheme('gold')">Modo Oro</button>
+    </div>
+
     <div id="particles-js"></div> 
+
     <div class="content">
-        <h1 id="main-title">🌌 El Universo de Henry</h1>
-        <p id="status-text">Sistema estable. Explorando el código.</p>
-        <div class="buttons-container">
-            <button class="btn-main" onclick="alert('¡Potencia al máximo, Henry!')">Acelerar</button>
-            <button class="btn-alt" onclick="toggleNeonMode()">Modo Neón</button>
-        </div>
+        <h1 id="title">🌌 El Universo de Henry</h1>
+        <p id="desc">Toca las tres líneas arriba para cambiar el universo.</p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <script>
-        // Configuración inicial de partículas
+        // Iniciar Partículas
         particlesJS('particles-js', {
             "particles": {
-                "number": { "value": 100 },
+                "number": { "value": 80 },
                 "color": { "value": "#ffffff" },
                 "line_linked": { "enable": true, "color": "#00eaff" },
-                "move": { "speed": 3 }
+                "move": { "speed": 4 }
             },
-            "interactivity": {
-                "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" } }
-            }
+            "interactivity": { "events": { "onhover": { "enable": true, "mode": "grab" } } }
         });
 
-        // Función de interacción mayor
-        let neonActive = false;
-        function toggleNeonMode() {
-            neonActive = !neonActive;
-            const title = document.getElementById('main-title');
-            const status = document.getElementById('status-text');
-            
-            if(neonActive) {
-                title.classList.add('neon-text');
-                status.innerText = "¡ALERTA! Modo Neón activado. Energía al 200%.";
-                document.body.style.backgroundColor = "#1a001a";
-                // Cambiamos color de partículas a rosa neón
-                window.pJSDom[0].pJS.particles.color.value = "#ff00de";
-                window.pJSDom[0].pJS.particles.line_linked.color = "#ff00de";
+        // Función para abrir/cerrar menú
+        function toggleMenu() {
+            document.getElementById("mySidebar").classList.toggle("active");
+        }
+
+        // Función para cambiar colores (Interacción mayor)
+        function changeTheme(mode) {
+            const body = document.body;
+            const p = window.pJSDom[0].pJS;
+            const title = document.getElementById("title");
+
+            if(mode === 'neon') {
+                body.style.backgroundColor = "#1a001a";
+                p.particles.color.value = "#ff00de";
+                p.particles.line_linked.color = "#ff00de";
+                title.style.textShadow = "0 0 20px #ff00de";
+            } else if(mode === 'gold') {
+                body.style.backgroundColor = "#1a1600";
+                p.particles.color.value = "#fdbb2d";
+                p.particles.line_linked.color = "#fdbb2d";
+                title.style.textShadow = "0 0 20px #fdbb2d";
             } else {
-                title.classList.remove('neon-text');
-                status.innerText = "Sistema estable. Explorando el código.";
-                document.body.style.backgroundColor = "#0d0d1a";
-                window.pJSDom[0].pJS.particles.color.value = "#ffffff";
-                window.pJSDom[0].pJS.particles.line_linked.color = "#00eaff";
+                body.style.backgroundColor = "#0d0d1a";
+                p.particles.color.value = "#ffffff";
+                p.particles.line_linked.color = "#00eaff";
+                title.style.textShadow = "0 0 20px #00d2ff";
             }
-            window.pJSDom[0].pJS.fn.particlesRefresh();
+            p.fn.particlesRefresh();
+            toggleMenu(); // Cierra el menú después de elegir
         }
     </script>
 </body>
-</html>        
-            
+</html>      
       
+   
+              
