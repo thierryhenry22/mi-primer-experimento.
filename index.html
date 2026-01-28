@@ -7,185 +7,120 @@
     <style>
         body {
             margin: 0;
-            overflow: hidden; /* Oculta barras de desplazamiento */
-            background-color: #0d0d1a; /* Fondo muy oscuro */
+            overflow: hidden;
+            background-color: #0d0d1a;
             color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             text-align: center;
-            position: relative; /* Necesario para posicionar el contenido sobre el canvas */
+            transition: background 0.5s ease;
         }
-        /* Estilo para el canvas de las partículas */
         #particles-js {
             position: absolute;
             width: 100%;
             height: 100%;
             top: 0;
             left: 0;
-            z-index: 1; /* Asegura que las partículas estén en el fondo */
+            z-index: 1;
         }
-        /* Estilo para el contenido (título, párrafo, botón) */
         .content {
             position: relative;
-            z-index: 2; /* Asegura que el contenido esté sobre las partículas */
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.4); /* Fondo semi-transparente para el contenido */
-            border-radius: 15px;
-            box-shadow: 0 0 25px rgba(0, 200, 255, 0.5);
+            z-index: 2;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 234, 255, 0.3);
         }
         h1 {
-            font-size: 4rem;
-            text-shadow: 0 0 25px #00eaff, 0 0 40px #00d2ff;
-            margin-bottom: 15px;
-            background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00d2ff, #9d50bb);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            transition: all 0.3s ease;
         }
-        p {
-            font-size: 1.4rem;
-            margin-bottom: 30px;
-            color: #b3e0ff;
+        .neon-text {
+            text-shadow: 0 0 10px #ff00de, 0 0 20px #ff00de;
+            background: linear-gradient(45deg, #ff00de, #ff4b2b) !important;
+            -webkit-background-clip: text !important;
+        }
+        .buttons-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
         }
         button {
-            padding: 18px 40px;
-            font-size: 1.3rem;
-            background-color: #00eaff;
+            padding: 15px 25px;
+            font-size: 1rem;
             border: none;
-            border-radius: 50px;
-            color: #0d0d1a;
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.4s ease;
+            transition: 0.3s;
             font-weight: bold;
-            letter-spacing: 1px;
             text-transform: uppercase;
-            box-shadow: 0 5px 15px rgba(0, 220, 255, 0.4);
         }
-        button:hover {
-            background-color: #3a7bd5;
-            transform: scale(1.1);
-            box-shadow: 0 8px 25px rgba(0, 220, 255, 0.6);
-            color: white;
-        }
+        .btn-main { background: #00eaff; color: #0d0d1a; }
+        .btn-alt { background: #9d50bb; color: white; }
+        
+        button:hover { transform: scale(1.05); filter: brightness(1.2); }
     </style>
 </head>
 <body>
-    <div id="particles-js"></div> <div class="content">
-        <h1>🌌 El Universo de Henry</h1>
-        <p>Explorando el cosmos del código.</p>
-        <button onclick="alert('¡Has activado una supernova de código, Henry!')">¡Acelera al Futuro!</button>
+    <div id="particles-js"></div> 
+    <div class="content">
+        <h1 id="main-title">🌌 El Universo de Henry</h1>
+        <p id="status-text">Sistema estable. Explorando el código.</p>
+        <div class="buttons-container">
+            <button class="btn-main" onclick="alert('¡Potencia al máximo, Henry!')">Acelerar</button>
+            <button class="btn-alt" onclick="toggleNeonMode()">Modo Neón</button>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <script>
+        // Configuración inicial de partículas
         particlesJS('particles-js', {
             "particles": {
-                "number": {
-                    "value": 80,
-                    "density": {
-                        "enable": true,
-                        "value_area": 800
-                    }
-                },
-                "color": {
-                    "value": "#ffffff"
-                },
-                "shape": {
-                    "type": "circle",
-                    "stroke": {
-                        "width": 0,
-                        "color": "#000000"
-                    },
-                    "polygon": {
-                        "nb_sides": 5
-                    }
-                },
-                "opacity": {
-                    "value": 0.5,
-                    "random": false,
-                    "anim": {
-                        "enable": false,
-                        "speed": 1,
-                        "opacity_min": 0.1,
-                        "sync": false
-                    }
-                },
-                "size": {
-                    "value": 3,
-                    "random": true,
-                    "anim": {
-                        "enable": false,
-                        "speed": 40,
-                        "size_min": 0.1,
-                        "sync": false
-                    }
-                },
-                "line_linked": {
-                    "enable": true,
-                    "distance": 150,
-                    "color": "#ffffff",
-                    "opacity": 0.4,
-                    "width": 1
-                },
-                "move": {
-                    "enable": true,
-                    "speed": 6,
-                    "direction": "none",
-                    "random": false,
-                    "straight": false,
-                    "out_mode": "out",
-                    "bounce": false,
-                    "attract": {
-                        "enable": false,
-                        "rotateX": 600,
-                        "rotateY": 1200
-                    }
-                }
+                "number": { "value": 100 },
+                "color": { "value": "#ffffff" },
+                "line_linked": { "enable": true, "color": "#00eaff" },
+                "move": { "speed": 3 }
             },
             "interactivity": {
-                "detect_on": "canvas",
-                "events": {
-                    "onhover": {
-                        "enable": true,
-                        "mode": "grab"
-                    },
-                    "onclick": {
-                        "enable": true,
-                        "mode": "push"
-                    },
-                    "resize": true
-                },
-                "modes": {
-                    "grab": {
-                        "distance": 140,
-                        "line_linked": {
-                            "opacity": 1
-                        }
-                    },
-                    "bubble": {
-                        "distance": 400,
-                        "size": 40,
-                        "duration": 2,
-                        "opacity": 8,
-                        "speed": 3
-                    },
-                    "repulse": {
-                        "distance": 200,
-                        "duration": 0.4
-                    },
-                    "push": {
-                        "particles_nb": 4
-                    },
-                    "remove": {
-                        "particles_nb": 2
-                    }
-                }
-            },
-            "retina_detect": true
+                "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" } }
+            }
         });
+
+        // Función de interacción mayor
+        let neonActive = false;
+        function toggleNeonMode() {
+            neonActive = !neonActive;
+            const title = document.getElementById('main-title');
+            const status = document.getElementById('status-text');
+            
+            if(neonActive) {
+                title.classList.add('neon-text');
+                status.innerText = "¡ALERTA! Modo Neón activado. Energía al 200%.";
+                document.body.style.backgroundColor = "#1a001a";
+                // Cambiamos color de partículas a rosa neón
+                window.pJSDom[0].pJS.particles.color.value = "#ff00de";
+                window.pJSDom[0].pJS.particles.line_linked.color = "#ff00de";
+            } else {
+                title.classList.remove('neon-text');
+                status.innerText = "Sistema estable. Explorando el código.";
+                document.body.style.backgroundColor = "#0d0d1a";
+                window.pJSDom[0].pJS.particles.color.value = "#ffffff";
+                window.pJSDom[0].pJS.particles.line_linked.color = "#00eaff";
+            }
+            window.pJSDom[0].pJS.fn.particlesRefresh();
+        }
     </script>
 </body>
-</html>
+</html>        
+            
+      
