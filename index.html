@@ -1,15 +1,47 @@
 <!DOCTYPE html>
-<html>
-<body style="background: linear-gradient(to right, #0f2027, #203a43, #2c5364); color: white; text-align: center; font-family: Arial; padding-top: 100px;">
-  <h1>🛸 El Laboratorio de Henry</h1>
-  <p id="frase">"El código es el lenguaje del futuro."</p>
-  <button onclick="cambiarFrase()" style="padding: 15px; border-radius: 10px; cursor: pointer;">Nueva Frase</button>
-
-  <script>
-    function cambiarFrase() {
-      const frases = ["¡Estás hackeando el sistema!", "Henry, ya eres un programador.", "La IA es tu copiloto."];
-      document.getElementById('frase').innerText = frases[Math.floor(Math.random()*frases.length)];
-    }
-  </script>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>El Espacio de Henry</title>
+    <style>
+        body {
+            background: #0f0c29;
+            background: linear-gradient(to bottom, #24243e, #302b63, #0f0c29);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            font-size: 3.5rem;
+            text-shadow: 0 0 20px #00d2ff;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #00d2ff;
+            border: none;
+            border-radius: 50px;
+            color: #0f0c29;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #3a7bd5;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px #00d2ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 El Espacio de Henry</h1>
+    <p>Dominando GitHub y la IA paso a paso.</p>
+    <button onclick="alert('¡Este es el poder del código, Henry!')">¡Toca la gloria!</button>
 </body>
 </html>
