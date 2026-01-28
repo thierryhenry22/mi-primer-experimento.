@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<body style="background: linear-gradient(to right, #0f2027, #203a43, #2c5364); color: white; text-align: center; font-family: Arial; padding-top: 100px;">
+  <h1>🛸 El Laboratorio de Henry</h1>
+  <p id="frase">"El código es el lenguaje del futuro."</p>
+  <button onclick="cambiarFrase()" style="padding: 15px; border-radius: 10px; cursor: pointer;">Nueva Frase</button>
+
+  <script>
+    function cambiarFrase() {
+      const frases = ["¡Estás hackeando el sistema!", "Henry, ya eres un programador.", "La IA es tu copiloto."];
+      document.getElementById('frase').innerText = frases[Math.floor(Math.random()*frases.length)];
+    }
+  </script>
+</body>
+</html>
