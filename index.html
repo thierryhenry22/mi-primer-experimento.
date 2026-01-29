@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✨ Henry - Interfaz Elegante</title>
+    <title>✨ Henry - Galactic Interface</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -13,179 +13,196 @@
             --neon-pink: #ff00de;
         }
 
-        body {
+        body, html {
             margin: 0;
-            background: #05050a;
-            color: #e0e0e0;
-            font-family: 'Rajdhani', sans-serif; /* Letra elegante y delgada */
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: #020205;
+            color: white;
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden; /* Para que las partículas no creen scroll */
+        }
+
+        /* --- FONDO DE PARTÍCULAS --- */
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* --- RELOJ FUTURISTA --- */
+        #clock {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue);
+            z-index: 10;
+        }
+
+        /* --- CONTROL DE MÚSICA --- */
+        .music-control {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            transition: 0.3s;
+        }
+        .music-control:hover { box-shadow: 0 0 15px var(--neon-blue); }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .main-container {
+            position: relative;
+            z-index: 5;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
+            height: 100vh;
         }
 
-        /* EL CONTENEDOR - CÁPSULA ELEGANTE */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 50px 15px 50px 15px; /* Curvas asimétricas elegantes */
-            padding: 50px;
-            position: relative;
-            width: 100%;
-            max-width: 420px;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 210, 255, 0.2);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+            background: rgba(10, 10, 20, 0.85);
+            border-radius: 40px 5px;
+            padding: 40px;
+            width: 90%;
+            max-width: 400px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
             text-align: center;
         }
 
-        /* Brillo de neón animado en las esquinas */
-        .glass-panel::before {
-            content: "";
-            position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            border-radius: 50px 15px 50px 15px;
-            background: linear-gradient(45deg, var(--neon-blue), transparent, var(--neon-pink));
-            z-index: -1;
-            filter: blur(5px);
-            opacity: 0.5;
-        }
-
         h1 {
-            font-family: 'Orbitron', sans-serif; /* Letra de impacto */
-            font-weight: 700;
-            font-size: 1.5rem;
-            margin-bottom: 35px;
-            letter-spacing: 4px;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 5px;
+            font-size: 1.2rem;
             color: white;
-            text-shadow: 0 0 15px var(--neon-blue);
-        }
-
-        /* FORMULARIO ESTILIZADO */
-        .input-box {
-            position: relative;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px var(--neon-pink);
         }
 
         input, textarea {
             width: 100%;
             background: transparent;
             border: none;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-            padding: 10px 0;
+            border-bottom: 1px solid var(--neon-blue);
+            padding: 12px 0;
             color: white;
-            font-size: 1.1rem;
-            font-family: 'Rajdhani', sans-serif;
+            margin-bottom: 20px;
             outline: none;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+        }
+
+        .btn-send {
+            background: transparent;
+            color: var(--neon-blue);
+            border: 1px solid var(--neon-blue);
+            padding: 12px 30px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
             transition: 0.4s;
         }
 
-        input:focus, textarea:focus {
-            border-bottom: 2px solid var(--neon-blue);
-        }
-
-        label {
-            position: absolute;
-            top: -15px;
-            left: 0;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--neon-blue);
-        }
-
-        /* BOTÓN DE DISEÑO ÚNICO */
-        .btn-modern {
-            background: transparent;
-            color: white;
-            border: 1px solid var(--neon-blue);
-            padding: 15px 30px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.9rem;
-            letter-spacing: 2px;
-            transition: 0.5s;
-            overflow: hidden;
-            position: relative;
-            z-index: 1;
-        }
-
-        .btn-modern::before {
-            content: "";
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 210, 255, 0.4), transparent);
-            transition: 0.5s;
-            z-index: -1;
-        }
-
-        .btn-modern:hover::before {
-            left: 100%;
-        }
-
-        .btn-modern:hover {
-            box-shadow: 0 0 20px var(--neon-blue);
+        .btn-send:hover {
             background: var(--neon-blue);
-            color: #05050a;
+            color: black;
+            box-shadow: 0 0 20px var(--neon-blue);
         }
 
-        /* REDES SOCIALES MINIMALISTAS */
-        .social-links {
-            margin-top: 40px;
+        .social {
+            margin-top: 30px;
             display: flex;
-            gap: 30px;
+            gap: 20px;
         }
-
-        .social-links a {
-            color: white;
-            font-size: 1.8rem;
-            transition: 0.3s;
-            opacity: 0.6;
-        }
-
-        .social-links a:hover {
-            opacity: 1;
-            transform: translateY(-5px);
-            color: var(--neon-pink);
-        }
+        .social a { color: white; font-size: 1.5rem; transition: 0.3s; }
+        .social a:hover { color: var(--neon-pink); transform: scale(1.2); }
 
     </style>
 </head>
 <body>
 
-    <div class="glass-panel">
-        <h1>COMMAND CENTER</h1>
-        
-        <form action="https://formspree.io/f/xykjzqpy" method="POST">
-            <div class="input-box">
-                <label>Identifier</label>
-                <input type="text" name="name" placeholder="Tu Nombre" required>
-            </div>
-            
-            <div class="input-box">
-                <label>Signal Path</label>
-                <input type="email" name="email" placeholder="tu@email.com" required>
-            </div>
+    <div id="particles-js"></div>
 
-            <div class="input-box">
-                <label>Frequency Message</label>
-                <textarea name="message" rows="2" placeholder="Escribe aquí..." required></textarea>
-            </div>
+    <div id="clock">00:00:00</div>
 
-            <button type="submit" class="btn-modern">ENVIAR SEÑAL</button>
-        </form>
+    <audio id="bg-music" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3" type="audio/mpeg">
+    </audio>
+    <div class="music-control" onclick="toggleMusic()">
+        <i id="music-icon" class="fas fa-play"></i>
     </div>
 
-    <div class="social-links">
-        <a href="https://www.instagram.com/henry_wg22/" target="_blank"><i class="fab fa-instagram"></i></a>
-        <a href="https://www.tiktok.com/@henry_wg22" target="_blank"><i class="fab fa-tiktok"></i></a>
+    <div class="main-container">
+        <div class="glass-panel">
+            <h1>STATION CONTACT</h1>
+            <form action="https://formspree.io/f/xykjzqpy" method="POST">
+                <input type="text" name="name" placeholder="ID USUARIO" required>
+                <input type="email" name="email" placeholder="FRECUENCIA (EMAIL)" required>
+                <textarea name="message" rows="2" placeholder="TRANSMISIÓN..." required></textarea>
+                <button type="submit" class="btn-send">INICIAR ENVÍO</button>
+            </form>
+        </div>
+
+        <div class="social">
+            <a href="https://www.instagram.com/henry_wg22/" target="_blank"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.tiktok.com/@henry_wg22" target="_blank"><i class="fab fa-tiktok"></i></a>
+        </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script>
+        // Partículas (Polvo Cósmico)
+        particlesJS('particles-js', {
+            "particles": {
+                "number": { "value": 100 },
+                "color": { "value": "#ffffff" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.5 },
+                "size": { "value": 2 },
+                "line_linked": { "enable": true, "distance": 150, "color": "#00d2ff", "opacity": 0.2, "width": 1 },
+                "move": { "enable": true, "speed": 2 }
+            },
+            "interactivity": {
+                "events": { "onhover": { "enable": true, "mode": "grab" } }
+            }
+        });
+
+        // Reloj
+        function updateClock() {
+            const now = new Date();
+            const time = now.getHours().toString().padStart(2, '0') + ":" + 
+                         now.getMinutes().toString().padStart(2, '0') + ":" + 
+                         now.getSeconds().toString().padStart(2, '0');
+            document.getElementById('clock').innerText = time;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Música
+        const music = document.getElementById('bg-music');
+        const icon = document.getElementById('music-icon');
+        function toggleMusic() {
+            if (music.paused) {
+                music.play();
+                icon.classList.replace('fa-play', 'fa-pause');
+            } else {
+                music.pause();
+                icon.classList.replace('fa-pause', 'fa-play');
+            }
+        }
+    </script>
 </body>
 </html>
- 
-
-           
