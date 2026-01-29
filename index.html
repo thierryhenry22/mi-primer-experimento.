@@ -166,7 +166,7 @@
 
     <section class="hero">
         <h1>HENRY GARCIA</h1>
-        <p>Creative Developer & UI Designer</p>
+        <p id="status-text" style="color: var(--neon-blue); font-family: 'Orbitron'; font-size: 0.8rem;"></p>        <p>Creative Developer & UI Designer</p>
         <div style="margin-top: 30px; color: var(--neon-blue); animation: bounce 2s infinite;">
             <i class="fas fa-chevron-down"></i>
         </div>
@@ -209,6 +209,29 @@
         </div>
         <p style="margin-top: 20px; font-size: 0.8rem; opacity: 0.5;">© 2026 HENRY GARCIA | ALL SYSTEMS OPERATIONAL</p>
     </footer>
+<script>
+    // 1. Definimos la función de lógica
+    function sistemaDeBienvenida() {
+        const ahora = new Date(); // Obtenemos la fecha y hora real
+        const hora = ahora.getHours(); // Extraemos solo la hora (0-23)
+        let saludo;
+
+        // 2. Aplicamos la Lógica de Decisión (Condicionales)
+        if (hora >= 6 && hora < 12) {
+            saludo = "SISTEMA INICIADO: BUENOS DÍAS, AGENTE.";
+        } else if (hora >= 12 && hora < 18) {
+            saludo = "SISTEMA INICIADO: BUENAS TARDES, AGENTE.";
+        } else {
+            saludo = "SISTEMA INICIADO: BUENAS NOCHES, AGENTE.";
+        }
+
+        // 3. Inyectamos el resultado en el HTML
+        document.getElementById('status-text').innerText = saludo;
+    }
+
+    // Ejecutamos la función al cargar la página
+    window.onload = sistemaDeBienvenida;
+</script>
 
 </body>
 </html>
