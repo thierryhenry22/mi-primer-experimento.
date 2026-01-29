@@ -3,38 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌌 El Universo de Henry - Edición Vídeo</title>
+    <title>📩 Contacto - Henry</title>
     <style>
         body {
             margin: 0;
-            overflow: hidden;
             background-color: #0d0d1a;
             color: white;
             font-family: 'Segoe UI', sans-serif;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            transition: background 0.5s ease;
-            position: relative; /* Para que el vídeo y el contenido se posicionen bien */
+            min-height: 100vh;
         }
 
-        /* --- VÍDEO DE FONDO --- */
-        #bg-video {
-            position: fixed;
-            right: 0;
-            bottom: 0;
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
-            z-index: 0; /* Asegura que el vídeo esté en el fondo de todo */
-            background-size: cover;
-            /* Filtro oscuro para que el texto se vea mejor */
-            filter: brightness(0.6); 
-        }
-
-        /* --- MENÚ DE TRES LÍNEAS (HAMBURGUESA) --- */
+        /* --- MENÚ DE TRES LÍNEAS --- */
         .menu-icon {
             position: fixed;
             top: 20px;
@@ -45,135 +28,80 @@
             background: rgba(0, 210, 255, 0.2);
             border-radius: 5px;
         }
-        .menu-icon div {
-            width: 30px;
-            height: 4px;
-            background-color: #00eaff;
-            margin: 5px 0;
-            transition: 0.4s;
+        .menu-icon div { width: 30px; height: 4px; background-color: #00eaff; margin: 5px 0; }
+
+        /* --- FORMULARIO --- */
+        .form-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
         }
 
-        /* --- BARRA LATERAL (SIDEBAR) --- */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: -250px; /* Escondida por defecto */
-            width: 250px;
-            height: 100%;
-            background: rgba(13, 13, 26, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 2px 0 15px rgba(0,0,0,0.5);
-            transition: 0.5s;
-            z-index: 99;
-            padding-top: 80px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            align-items: center;
-        }
-        .sidebar.active {
-            left: 0; /* Se muestra al activar */
-        }
+        h2 { color: #00eaff; text-shadow: 0 0 10px #00eaff; margin-bottom: 25px; }
 
-        .sidebar h3 { color: #00eaff; margin-bottom: 10px; }
-
-        .color-opt {
-            width: 80%;
+        input, textarea {
+            width: 100%;
             padding: 12px;
-            border: none;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 8px;
             color: white;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
+            outline: none;
+            box-sizing: border-box; /* Importante para el tamaño */
         }
 
-        /* --- ESTILOS DE LA PÁGINA (Contenido sobre el vídeo) --- */
-        #particles-js { position: absolute; width: 100%; height: 100%; z-index: 1; }
-        .content { position: relative; z-index: 2; text-align: center; }
-        h1 { font-size: 3rem; text-shadow: 0 0 20px #00d2ff; }
-        
-        /* Colores de botones del menú */
-        .btn-neon { background: #ff00de; }
-        .btn-cyan { background: #00eaff; color: #0d0d1a; }
-        .btn-gold { background: #fdbb2d; color: #0d0d1a; }
+        input:focus, textarea:focus { border-color: #00eaff; box-shadow: 0 0 10px rgba(0, 210, 255, 0.5); }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #00eaff;
+            border: none;
+            border-radius: 8px;
+            color: #0d0d1a;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: #3a7bd5;
+            color: white;
+            box-shadow: 0 0 20px #00eaff;
+            transform: translateY(-3px);
+        }
     </style>
 </head>
 <body>
 
-   <video autoplay muted loop playsinline id="bg-video" style="background-color: black;">
-    <source src="https://assets.mixkit.co/videos/preview/mixkit-nebula-with-stars-and-comets-1234-large.mp4" type="video/mp4">
-</video>        Tu navegador no soporta el vídeo de fondo.
-    </video>
-
-    <div class="menu-icon" onclick="toggleMenu()">
-        <div></div>
-        <div></div>
-        <div></div>
+    <div class="menu-icon">
+        <div></div><div></div><div></div>
     </div>
 
-    <div class="sidebar" id="mySidebar">
-        <h3>Panel de Energía</h3>
-        <button class="color-opt btn-cyan" onclick="changeTheme('cyan')">Modo Espacio</button>
-        <button class="color-opt btn-neon" onclick="changeTheme('neon')">Modo Neón</button>
-        <button class="color-opt btn-blue" onclick="changeTheme('gold')">Modo Oro</button>
-        </div>
-
-    <div id="particles-js"></div> 
-
-    <div class="content">
-        <h1 id="title">🌌 El Universo de Henry</h1>
-        <p id="desc">¡Bienvenido a mi cosmos personal!</p>
+    <div class="form-container">
+        <h2>🚀 Envíame un Mensaje</h2>
+        <form id="contactForm">
+            <input type="text" placeholder="Tu Nombre" required>
+            <input type="email" placeholder="Tu Correo" required>
+            <textarea rows="4" placeholder="¿Qué tienes en mente?" required></textarea>
+            <button type="submit">Enviar al Espacio</button>
+        </form>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <script>
-        // Iniciar Partículas
-        particlesJS('particles-js', {
-            "particles": {
-                "number": { "value": 80 },
-                "color": { "value": "#ffffff" },
-                "line_linked": { "enable": true, "color": "#00eaff" },
-                "move": { "speed": 4 }
-            },
-            "interactivity": { "events": { "onhover": { "enable": true, "mode": "grab" } } }
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('¡Mensaje recibido Henry! (Esto es una simulación, para recibir correos reales necesitaríamos un servicio extra, pero el diseño ya lo tienes)');
+            this.reset();
         });
-
-        // Función para abrir/cerrar menú
-        function toggleMenu() {
-            document.getElementById("mySidebar").classList.toggle("active");
-        }
-
-        // Función para cambiar colores (Interacción mayor)
-        function changeTheme(mode) {
-            const body = document.body;
-            const p = window.pJSDom[0].pJS;
-            const title = document.getElementById("title");
-
-            if(mode === 'neon') {
-                body.style.backgroundColor = "#1a001a";
-                p.particles.color.value = "#ff00de";
-                p.particles.line_linked.color = "#ff00de";
-                title.style.textShadow = "0 0 20px #ff00de";
-            } else if(mode === 'gold') {
-                body.style.backgroundColor = "#1a1600";
-                p.particles.color.value = "#fdbb2d";
-                p.particles.line_linked.color = "#fdbb2d";
-                title.style.textShadow = "0 0 20px #fdbb2d";
-            } else { // Modo Espacio por defecto
-                body.style.backgroundColor = "#0d0d1a";
-                p.particles.color.value = "#ffffff";
-                p.particles.line_linked.color = "#00eaff";
-                title.style.textShadow = "0 0 20px #00d2ff";
-            }
-            p.fn.particlesRefresh(); // Refresca las partículas con el nuevo color
-            // toggleMenu(); // Desactiva esta línea si no quieres que el menú se cierre solo
-        }
     </script>
 </body>
-</html>           
-     
-
-      
-   
-              
+</html>
