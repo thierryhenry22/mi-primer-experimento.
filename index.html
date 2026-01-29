@@ -197,7 +197,10 @@
                 <input type="text" name="name" placeholder="NOMBRE DEL CLIENTE" required>
                 <input type="email" name="email" placeholder="CORREO ELECTRÓNICO" required>
                 <textarea name="message" rows="3" placeholder="DETALLES DEL PROYECTO..." required></textarea>
-                <button type="submit" class="btn-modern">ENVIAR PROPUESTA</button>
+                <div class="input-box">
+    <label>Cambiar Energía (Escribe un color)</label>
+    <input type="text" id="color-input" placeholder="Ej: red, blue, gold, lime..." oninput="cambiarEnergia()">
+</div>                <button type="submit" class="btn-modern">ENVIAR PROPUESTA</button>
             </form>
         </div>
     </section>
