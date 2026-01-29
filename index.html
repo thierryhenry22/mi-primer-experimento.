@@ -30,7 +30,7 @@
         }
         .menu-icon div { width: 30px; height: 4px; background-color: #00eaff; margin: 5px 0; }
 
-        /* --- FORMULARIO --- */
+        /* --- FORMULARIO MODERNO --- */
         .form-container {
             background: rgba(255, 255, 255, 0.05);
             padding: 40px;
@@ -54,7 +54,7 @@
             border-radius: 8px;
             color: white;
             outline: none;
-            box-sizing: border-box; /* Importante para el tamaño */
+            box-sizing: border-box;
         }
 
         input:focus, textarea:focus { border-color: #00eaff; box-shadow: 0 0 10px rgba(0, 210, 255, 0.5); }
@@ -88,20 +88,14 @@
 
     <div class="form-container">
         <h2>🚀 Envíame un Mensaje</h2>
-        <form id="contactForm">
-            <input type="text" placeholder="Tu Nombre" required>
-            <input type="email" placeholder="Tu Correo" required>
-            <textarea rows="4" placeholder="¿Qué tienes en mente?" required></textarea>
+        
+        <form action="https://formspree.io/f/xykjzqpy" method="POST">
+            <input type="text" name="name" placeholder="Tu Nombre" required>
+            <input type="email" name="email" placeholder="Tu Correo Electrónico" required>
+            <textarea name="message" rows="4" placeholder="¿Qué tienes en mente?" required></textarea>
             <button type="submit">Enviar al Espacio</button>
         </form>
     </div>
 
-    <script>
-        document.getElementById('contactForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            alert('¡Mensaje recibido Henry! (Esto es una simulación, para recibir correos reales necesitaríamos un servicio extra, pero el diseño ya lo tienes)');
-            this.reset();
-        });
-    </script>
 </body>
 </html>
