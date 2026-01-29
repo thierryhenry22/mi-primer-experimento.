@@ -3,231 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Henry | Dev & Design Studio</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <title>Henry AI - Interface</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
         :root {
-            --neon-blue: #00d2ff;
-            --neon-pink: #ff00de;
-            --glass: rgba(255, 255, 255, 0.03);
+            --gemini-gradient: linear-gradient(135deg, #4285f4, #9b72cb, #d96570);
+            --bg-dark: #0f1114; /* El gris oscuro casi negro de Gemini */
+            --glass-bg: rgba(30, 31, 34, 0.7);
         }
 
         body {
             margin: 0;
-            background: #020205;
-            color: white;
-            font-family: 'Rajdhani', sans-serif;
-            scroll-behavior: smooth;
-        }
-
-        /* --- SECCIÓN HERO --- */
-        .hero {
-            height: 100vh;
+            background-color: var(--bg-dark);
+            color: #e3e3e3;
+            font-family: 'Inter', sans-serif;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            text-align: center;
-            padding: 20px;
+            min-height: 100vh;
+            overflow: hidden;
         }
 
-        .hero h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(1.5rem, 5vw, 3rem);
-            letter-spacing: 8px;
-            margin: 0;
-            background: linear-gradient(to right, var(--neon-blue), var(--neon-pink));
+        /* --- EL CONTENEDOR TIPO CHAT DE GEMINI --- */
+        .gemini-container {
+            width: 90%;
+            max-width: 600px;
+            background: var(--glass-bg);
+            border-radius: 28px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            transition: all 0.5s ease;
+        }
+
+        /* El icono brillante de la IA */
+        .ai-sparkle {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            background: var(--gemini-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            display: inline-block;
+            animation: pulse 3s infinite;
         }
 
-        .hero p {
-            font-size: 1.2rem;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            margin-top: 10px;
-            opacity: 0.8;
-        }
-
-        /* --- SECCIÓN SKILLS (INTERACTIVA) --- */
-        .skills-container {
-            padding: 100px 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .skill-card {
-            background: var(--glass);
-            padding: 40px;
-            border-radius: 20px;
-            border: 1px solid rgba(0, 210, 255, 0.2);
-            text-align: center;
-            transition: 0.5s;
-        }
-
-        .skill-card:hover {
-            border-color: var(--neon-pink);
-            transform: translateY(-10px);
-            box-shadow: 0 10px 30px rgba(255, 0, 222, 0.2);
-        }
-
-        .skill-card i {
-            font-size: 3rem;
-            color: var(--neon-blue);
-            margin-bottom: 20px;
-        }
-
-        /* --- FORMULARIO ESTILO COMANDO --- */
-        .contact-section {
-            padding: 100px 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .glass-panel {
-            background: var(--glass);
-            border-radius: 50px 15px;
-            padding: 50px;
-            width: 100%;
-            max-width: 450px;
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 210, 255, 0.3);
-            position: relative;
-        }
-
-        /* El efecto láser que te gustó */
-        .glass-panel::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 2px;
-            background: var(--neon-blue);
-            animation: scan 3s linear infinite;
-        }
-
-        @keyframes scan {
-            0% { top: 0; opacity: 0; }
-            50% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-
-        input, textarea {
-            width: 100%;
-            background: transparent;
-            border: none;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 12px 0;
-            color: white;
-            margin-bottom: 30px;
-            outline: none;
-            font-family: 'Rajdhani';
-            font-size: 1.1rem;
-        }
-
-        .btn-modern {
-            width: 100%;
-            padding: 15px;
-            background: transparent;
-            color: white;
-            border: 1px solid var(--neon-blue);
-            font-family: 'Orbitron';
-            cursor: pointer;
-            transition: 0.4s;
-            border-radius: 5px;
-        }
-
-        .btn-modern:hover {
-            background: var(--neon-blue);
-            color: black;
-            box-shadow: 0 0 20px var(--neon-blue);
-        }
-
-        footer {
-            padding: 50px;
-            text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .social-icons a {
-            color: white;
+        h1 {
+            font-weight: 500;
             font-size: 1.8rem;
-            margin: 0 15px;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .status-msg {
+            font-size: 0.9rem;
+            color: #8e918f;
+            margin-bottom: 30px;
+        }
+
+        /* INPUTS ESTILO GOOGLE */
+        .input-wrapper {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
             transition: 0.3s;
         }
 
-        .social-icons a:hover { color: var(--neon-pink); }
+        .input-wrapper:focus-within {
+            border-color: #4285f4;
+            background: rgba(66, 133, 244, 0.05);
+        }
+
+        input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: white;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        /* BOTÓN DE ACCIÓN */
+        .btn-gemini {
+            background: var(--gemini-gradient);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-gemini:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(155, 114, 203, 0.5);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
     </style>
 </head>
 <body>
 
-    <section class="hero">
-        <h1>HENRY GARCIA</h1>
-        <p id="status-text" style="color: var(--neon-blue); font-family: 'Orbitron'; font-size: 0.8rem;"></p>        <p>Creative Developer & UI Designer</p>
-        <div style="margin-top: 30px; color: var(--neon-blue); animation: bounce 2s infinite;">
-            <i class="fas fa-chevron-down"></i>
+    <div class="gemini-container" id="main-panel">
+        <div class="ai-sparkle">
+            <i class="fas fa-wand-magic-sparkles"></i>
         </div>
-    </section>
+        
+        <h1 id="title">Hola, soy Henry</h1>
+        <p class="status-msg">Marca Personal | Programador & Diseñador</p>
 
-    <section class="skills-container">
-        <div class="skill-card">
-            <i class="fas fa-code"></i>
-            <h3 style="font-family: 'Orbitron';">DEVELOPMENT</h3>
-            <p>Construcción de interfaces interactivas con código limpio y eficiente.</p>
+        <div class="input-wrapper">
+            <input type="text" id="color-trigger" placeholder="Escribe un color para cambiar mi aura..." oninput="cambiarInterfaz()">
         </div>
-        <div class="skill-card">
-            <i class="fas fa-paint-brush"></i>
-            <h3 style="font-family: 'Orbitron';">DESIGN</h3>
-            <p>Diseño de experiencias de usuario con estética futurista y moderna.</p>
-        </div>
-        <div class="skill-card">
-            <i class="fas fa-terminal"></i>
-            <h3 style="font-family: 'Orbitron';">SOLUTIONS</h3>
-            <p>Arquitectura de sistemas digitales personalizados para cada proyecto.</p>
-        </div>
-    </section>
 
-    <section class="contact-section">
-        <div class="glass-panel">
-            <h2 style="font-family: 'Orbitron'; text-align: center; margin-bottom: 40px;">INICIAR PROYECTO</h2>
-            <form action="https://formspree.io/f/xykjzqpy" method="POST">
-                <input type="text" name="name" placeholder="NOMBRE DEL CLIENTE" required>
-                <input type="email" name="email" placeholder="CORREO ELECTRÓNICO" required>
-                <textarea name="message" rows="3" placeholder="DETALLES DEL PROYECTO..." required></textarea>
-                <div class="input-box">
-    <label>Cambiar Energía (Escribe un color)</label>
-    <input type="text" id="color-input" placeholder="Ej: red, blue, gold, lime..." oninput="cambiarEnergia()">
-</div>                <button type="submit" class="btn-modern">ENVIAR PROPUESTA</button>
-            </form>
-        </div>
-    </section>
+        <button class="btn-gemini">Explorar Capacidades</button>
+    </div>
 
-    <footer>
-        <div class="social-icons">
-            <a href="https://www.instagram.com/henry_wg22/" target="_blank"><i class="fab fa-instagram"></i></a>
-            <a href="https://www.tiktok.com/@henry_wg22" target="_blank"><i class="fab fa-tiktok"></i></a>
-        </div>
-        <p style="margin-top: 20px; font-size: 0.8rem; opacity: 0.5;">© 2026 HENRY GARCIA | ALL SYSTEMS OPERATIONAL</p>
-    </footer>
-<script>
+    <script>
+        function cambiarInterfaz() {
+            // LÓGICA DE PROGRAMACIÓN:
+            // 1. Obtenemos el valor
+            const color = document.getElementById('color-trigger').value;
+            const panel = document.getElementById('main-panel');
+            const sparkle = document.querySelector('.ai-sparkle');
 
-    function cambiarEnergia() {
-    // 1. Capturamos lo que el usuario está escribiendo
-    const colorEscrito = document.getElementById('color-input').value;
-    
-    // 2. Seleccionamos el panel que queremos que brille
-    const panel = document.querySelector('.glass-panel');
-    
-    // 3. Aplicamos la lógica: Si el usuario escribió algo, cámbialo
-    // Usamos el valor escrito para cambiar el borde y la sombra
-    panel.style.borderColor = colorEscrito;
-    panel.style.boxShadow = `0 0 30px ${colorEscrito}`;
-    
-    // 4. Extra: Cambiamos también el color del título para que combine
-    document.querySelector('h1').style.color = colorEscrito;
-}
+            // 2. Aplicamos el cambio dinámico
+            if (color.length > 2) {
+                panel.style.boxShadow = `0 10px 40px ${color}44`; // El 44 al final le da transparencia
+                panel.style.borderColor = color;
+                sparkle.style.filter = `drop-shadow(0 0 10px ${color})`;
+            }
+        }
+    </script>
 </body>
 </html>
