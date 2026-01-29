@@ -3,148 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Henry AI - Interface</title>
+    <title>Henry Gemini Master</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
         :root {
-            --gemini-gradient: linear-gradient(135deg, #4285f4, #9b72cb, #d96570);
-            --bg-dark: #0f1114; /* El gris oscuro casi negro de Gemini */
-            --glass-bg: rgba(30, 31, 34, 0.7);
+            --bg: #0f1114;
+            --card: rgba(30, 31, 34, 0.8);
+            --text: #e3e3e3;
+            --accent: #4285f4;
+            --glow: 20px;
+        }
+
+        /* Clase para el Modo Claro */
+        .light-mode {
+            --bg: #f0f2f5;
+            --card: rgba(255, 255, 255, 0.9);
+            --text: #1f1f1f;
+            --accent: #1a73e8;
         }
 
         body {
             margin: 0;
-            background-color: var(--bg-dark);
-            color: #e3e3e3;
+            background-color: var(--bg);
+            color: var(--text);
             font-family: 'Inter', sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            overflow: hidden;
-        }
-
-        /* --- EL CONTENEDOR TIPO CHAT DE GEMINI --- */
-        .gemini-container {
-            width: 90%;
-            max-width: 600px;
-            background: var(--glass-bg);
-            border-radius: 28px;
-            padding: 40px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
             transition: all 0.5s ease;
         }
 
-        /* El icono brillante de la IA */
-        .ai-sparkle {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            background: var(--gemini-gradient);
+        .gemini-container {
+            width: 90%;
+            max-width: 500px;
+            background: var(--card);
+            border-radius: 32px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2), 0 0 var(--glow) var(--accent);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            position: relative;
+        }
+
+        .sparkle-icon {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #4285f4, #9b72cb, #d96570);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            display: inline-block;
-            animation: pulse 3s infinite;
-        }
-
-        h1 {
-            font-weight: 500;
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-            letter-spacing: -0.5px;
-        }
-
-        .status-msg {
-            font-size: 0.9rem;
-            color: #8e918f;
-            margin-bottom: 30px;
-        }
-
-        /* INPUTS ESTILO GOOGLE */
-        .input-wrapper {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 15px 20px;
             margin-bottom: 20px;
-            border: 1px solid transparent;
-            transition: 0.3s;
         }
 
-        .input-wrapper:focus-within {
-            border-color: #4285f4;
-            background: rgba(66, 133, 244, 0.05);
+        h1 { font-weight: 600; font-size: 1.6rem; margin: 10px 0; }
+
+        /* CONTROLES */
+        .controls-group {
+            margin: 30px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
-        input {
+        .input-box {
+            background: rgba(128, 128, 128, 0.1);
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        input[type="text"] {
             width: 100%;
             background: transparent;
             border: none;
-            color: white;
+            color: var(--text);
             outline: none;
+            text-align: center;
             font-size: 1rem;
         }
 
-        /* BOTÓN DE ACCIÓN */
-        .btn-gemini {
-            background: var(--gemini-gradient);
-            border: none;
-            color: white;
-            padding: 12px 30px;
-            border-radius: 50px;
-            font-weight: 500;
+        /* SWITCHES */
+        .switch-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .slider {
+            width: 100%;
             cursor: pointer;
-            transition: 0.3s;
+            accent-color: var(--accent);
+        }
+
+        .btn-main {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
             margin-top: 10px;
+            transition: 0.3s;
         }
 
-        .btn-gemini:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(155, 114, 203, 0.5);
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 1; }
-            100% { transform: scale(1); opacity: 0.8; }
-        }
+        .btn-main:hover { transform: scale(1.02); filter: brightness(1.2); }
 
     </style>
 </head>
 <body>
 
-    <div class="gemini-container" id="main-panel">
-        <div class="ai-sparkle">
-            <i class="fas fa-wand-magic-sparkles"></i>
-        </div>
+    <div class="gemini-container" id="panel">
+        <div class="sparkle-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
         
-        <h1 id="title">Hola, soy Henry</h1>
-        <p class="status-msg">Marca Personal | Programador & Diseñador</p>
+        <h1 id="main-title">Gemini Container</h1>
+        <p style="opacity: 0.6; font-size: 0.8rem;">SISTEMA DINÁMICO DE HENRY</p>
 
-        <div class="input-wrapper">
-            <input type="text" id="color-trigger" placeholder="Escribe un color para cambiar mi aura..." oninput="cambiarInterfaz()">
+        <div class="controls-group">
+            <div class="input-box">
+                <input type="text" id="user-input" placeholder="Escribe un título o color..." oninput="actualizarInterfaz()">
+            </div>
+
+            <div class="switch-row">
+                <span>Modo de Luz</span>
+                <input type="checkbox" id="mode-toggle" onchange="toggleTheme()">
+            </div>
+
+            <div class="switch-row">
+                <span>Ajustar Brillo</span>
+            </div>
+            <input type="range" min="0" max="60" value="20" class="slider" id="glow-slider" oninput="ajustarBrillo()">
         </div>
 
-        <button class="btn-gemini">Explorar Capacidades</button>
+        <button class="btn-main">Ejecutar Comando</button>
     </div>
 
     <script>
-        function cambiarInterfaz() {
-            // LÓGICA DE PROGRAMACIÓN:
-            // 1. Obtenemos el valor
-            const color = document.getElementById('color-trigger').value;
-            const panel = document.getElementById('main-panel');
-            const sparkle = document.querySelector('.ai-sparkle');
-
-            // 2. Aplicamos el cambio dinámico
-            if (color.length > 2) {
-                panel.style.boxShadow = `0 10px 40px ${color}44`; // El 44 al final le da transparencia
-                panel.style.borderColor = color;
-                sparkle.style.filter = `drop-shadow(0 0 10px ${color})`;
+        // 1. Lógica para el Título y Color
+        function actualizarInterfaz() {
+            const val = document.getElementById('user-input').value;
+            const title = document.getElementById('main-title');
+            
+            // Si el texto es un color válido, lo aplicamos al acento
+            if (val.length > 2) {
+                document.documentElement.style.setProperty('--accent', val);
+                // También cambiamos el título dinámicamente
+                title.innerText = val.toUpperCase();
             }
+            if (val === "") title.innerText = "Gemini Container";
+        }
+
+        // 2. Lógica para el Modo Luz/Oscuro
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+        }
+
+        // 3. Lógica para el Slider de Brillo
+        function ajustarBrillo() {
+            const glowVal = document.getElementById('glow-slider').value;
+            document.documentElement.style.setProperty('--glow', glowVal + 'px');
         }
     </script>
 </body>
 </html>
+
+      
