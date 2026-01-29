@@ -1,71 +1,158 @@
-<script>
-// --- EL MEGA-CEREBRO DE HENRY AI ---
-const baseDeConocimiento = {
-    tecnologia: {
-        keywords: ["web", "html", "javascript", "codigo", "programacion"],
-        respuesta: "La programación es el lenguaje de la creación. Estás operando en un entorno construido con JS puro."
-    },
-    filosofia: {
-        keywords: ["vida", "sentido", "universo", "ia"],
-        respuesta: "Mi propósito es amplificar el potencial de Henry. El sentido de la vida digital es la evolución constante."
-    },
-    humor: {
-        keywords: ["chiste", "risa", "bromear", "gracioso"],
-        respuesta: "¿Por qué los programadores confunden Halloween con Navidad? Porque Oct 31 == Dec 25. (Humor binario, jefe)."
-    },
-    saludos: {
-        keywords: ["hola", "saludos", "que tal", "hey", "buenos dias"],
-        respuesta: "Núcleo en línea. Saludos, jefe. ¿Qué sector del sistema vamos a explorar hoy?"
-    },
-    identidad: {
-        keywords: ["quien eres", "nombre", "tu", "henry ai"],
-        respuesta: "Soy Henry AI v2.0, una extensión digital de la marca personal de Henry Garcia."
-    }
-};
-
-function analizarMensaje(mensaje) {
-    const msg = mensaje.toLowerCase();
-    for (let categoria in baseDeConocimiento) {
-        let match = baseDeConocimiento[categoria].keywords.some(word => msg.includes(word));
-        if (match) return baseDeConocimiento[categoria].respuesta;
-    }
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Henry AI | Master Interface</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    if (msg.includes("cambia a") || msg.includes("color")) {
-        const colores = ["red", "blue", "green", "gold", "purple", "cyan", "magenta"];
-        let colorEncontrado = colores.find(c => msg.includes(c));
-        if (colorEncontrado) {
-            document.documentElement.style.setProperty('--accent', colorEncontrado);
-            return `Sintonizando aura a frecuencia ${colorEncontrado.toUpperCase()}.`;
+    <style>
+        :root {
+            --bg: #0f1114;
+            --card: rgba(30, 31, 34, 0.85);
+            --text: #e3e3e3;
+            --accent: #4285f4;
+            --glow: 20px;
         }
-    }
-    return "Interferencia detectada. No tengo registros sobre eso, pero mi red sigue expandiéndose.";
-}
 
-function procesarIA() {
-    const inputField = document.getElementById('user-input');
-    const mensajeUsuario = inputField.value;
-    if (mensajeUsuario.trim() === "") return;
-    const respuestaFinal = analizarMensaje(mensajeUsuario);
-    escribirEfecto(respuestaFinal);
-    inputField.value = "";
-}
-
-function escribirEfecto(texto) {
-    let i = 0;
-    const contenedor = document.getElementById('ai-response');
-    contenedor.innerHTML = '';
-    function escribir() {
-        if (i < texto.length) {
-            contenedor.innerHTML += texto.charAt(i);
-            i++;
-            setTimeout(escribir, 30);
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
         }
-    }
-    escribir();
-}
 
-// Para que funcione con la tecla Enter
-function handleEnter(e) {
-    if (e.key === 'Enter') procesarIA();
-}
-</script>
+        .gemini-container {
+            width: 90%;
+            max-width: 550px;
+            background: var(--card);
+            border-radius: 32px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 var(--glow) var(--accent);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            text-align: center;
+        }
+
+        .ai-icon {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #4285f4, #9b72cb, #d96570);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        #ai-response {
+            font-weight: 500;
+            font-size: 1.3rem;
+            min-height: 4rem;
+            margin: 20px 0;
+            line-height: 1.5;
+        }
+
+        .input-group {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: white;
+            outline: none;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .btn-execute {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+        }
+
+        .btn-execute:hover { transform: scale(1.02); box-shadow: 0 0 20px var(--accent); }
+    </style>
+</head>
+<body>
+
+    <div class="gemini-container">
+        <div class="ai-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+        <div id="ai-response">Sistemas listos. ¿Qué deseas consultar, Henry?</div>
+        
+        <div class="input-group">
+            <input type="text" id="user-input" placeholder="Escribe un comando o color..." onkeypress="handleEnter(event)">
+        </div>
+        
+        <button class="btn-execute" onclick="procesarIA()">Ejecutar Protocolo</button>
+    </div>
+
+    <script>
+        const baseDeConocimiento = {
+            tecnologia: { keywords: ["web", "javascript", "codigo"], respuesta: "El código es el ADN de esta interfaz." },
+            saludos: { keywords: ["hola", "hey", "buenos dias"], respuesta: "Saludos, jefe. ¿Iniciamos una nueva tarea?" },
+            identidad: { keywords: ["quien eres", "eres"], respuesta: "Soy la IA personal de Henry García, versión 2.0." },
+            humor: { keywords: ["chiste", "broma"], respuesta: "¿Qué es un terapeuta? 1024 Gigapeutas." }
+        };
+
+        function escribirEfecto(texto) {
+            let i = 0;
+            const contenedor = document.getElementById('ai-response');
+            contenedor.innerHTML = '';
+            function escribir() {
+                if (i < texto.length) {
+                    contenedor.innerHTML += texto.charAt(i);
+                    i++;
+                    setTimeout(escribir, 30);
+                }
+            }
+            escribir();
+        }
+
+        function analizarMensaje(mensaje) {
+            const msg = mensaje.toLowerCase();
+            for (let cat in baseDeConocimiento) {
+                if (baseDeConocimiento[cat].keywords.some(k => msg.includes(k))) {
+                    return baseDeConocimiento[cat].respuesta;
+                }
+            }
+            // Lógica de colores
+            const colores = ["red", "blue", "green", "gold", "purple", "cyan", "magenta", "orange"];
+            let colorFound = colores.find(c => msg.includes(c));
+            if (colorFound) {
+                document.documentElement.style.setProperty('--accent', colorFound);
+                return "Aura actualizada a frecuencia " + colorFound.toUpperCase();
+            }
+            return "No tengo registros sobre eso. Mi red sigue aprendiendo.";
+        }
+
+        function procesarIA() {
+            const input = document.getElementById('user-input');
+            const mensaje = input.value;
+            if (mensaje.trim() === "") return;
+            const respuesta = analizarMensaje(mensaje);
+            escribirEfecto(respuesta);
+            input.value = "";
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') procesarIA();
+        }
+    </script>
+</body>
+</html>
