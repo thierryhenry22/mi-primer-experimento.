@@ -3,69 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📩 Contacto - Henry</title>
+    <title>Henry Garcia | Marca Personal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
             margin: 0;
-            background-color: #0d0d1a;
+            background: radial-gradient(circle at top, #1a1a3a, #050510);
             color: white;
             font-family: 'Segoe UI', sans-serif;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
         }
 
-        /* --- MENÚ DE TRES LÍNEAS --- */
-        .menu-icon {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 100;
-            cursor: pointer;
-            padding: 10px;
-            background: rgba(0, 210, 255, 0.2);
-            border-radius: 5px;
-        }
-        .menu-icon div { width: 30px; height: 4px; background-color: #00eaff; margin: 5px 0; }
-
-        /* --- FORMULARIO MODERNO --- */
-        .form-container {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 40px;
-            border-radius: 20px;
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 210, 255, 0.3);
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-            width: 90%;
-            max-width: 400px;
+        /* --- CONTENEDOR EFECTO CRISTAL (GLASSMORPHISM) --- */
+        .profile-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 50px 30px;
+            border-radius: 30px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px); /* Compatibilidad Safari */
+            border: 1px solid rgba(0, 234, 255, 0.2);
             text-align: center;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
-        h2 { color: #00eaff; text-shadow: 0 0 10px #00eaff; margin-bottom: 25px; }
+        h1 {
+            font-size: 2.5rem;
+            margin: 10px 0;
+            background: linear-gradient(to right, #00eaff, #0072ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
+        p { color: #b3e0ff; font-size: 1.1rem; margin-bottom: 30px; }
+
+        /* --- REDES SOCIALES --- */
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .social-links a {
+            color: #00eaff;
+            font-size: 2.2rem;
+            transition: 0.4s;
+            text-decoration: none;
+        }
+
+        .social-links a:hover {
+            color: white;
+            transform: translateY(-5px) scale(1.1);
+            text-shadow: 0 0 15px #00eaff;
+        }
+
+        /* --- FORMULARIO --- */
         input, textarea {
             width: 100%;
             padding: 12px;
-            margin-bottom: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 234, 255, 0.2);
+            border-radius: 10px;
             color: white;
             outline: none;
-            box-sizing: border-box;
         }
-
-        input:focus, textarea:focus { border-color: #00eaff; box-shadow: 0 0 10px rgba(0, 210, 255, 0.5); }
 
         button {
             width: 100%;
             padding: 15px;
-            background: #00eaff;
+            background: linear-gradient(45deg, #0072ff, #00eaff);
             border: none;
-            border-radius: 8px;
-            color: #0d0d1a;
+            border-radius: 10px;
+            color: white;
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
@@ -73,27 +88,29 @@
         }
 
         button:hover {
-            background: #3a7bd5;
-            color: white;
-            box-shadow: 0 0 20px #00eaff;
-            transform: translateY(-3px);
+            filter: brightness(1.2);
+            box-shadow: 0 0 20px rgba(0, 234, 255, 0.6);
         }
     </style>
 </head>
 <body>
 
-    <div class="menu-icon">
-        <div></div><div></div><div></div>
-    </div>
+    <div class="profile-card">
+        <h1>Henry Garcia</h1>
+        <p>Innovador Digital | Explorador de Código</p>
 
-    <div class="form-container">
-        <h2>🚀 Envíame un Mensaje</h2>
-        
+        <div class="social-links">
+            <a href="#" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" target="_blank" title="TikTok"><i class="fab fa-tiktok"></i></a>
+            <a href="https://github.com/thierryhenry22" target="_blank" title="GitHub"><i class="fab fa-github"></i></a>
+        </div>
+
+        <hr style="border: 0.5px solid rgba(0, 234, 255, 0.1); margin-bottom: 30px;">
+
         <form action="https://formspree.io/f/xykjzqpy" method="POST">
             <input type="text" name="name" placeholder="Tu Nombre" required>
-            <input type="email" name="email" placeholder="Tu Correo Electrónico" required>
-            <textarea name="message" rows="4" placeholder="¿Qué tienes en mente?" required></textarea>
-            <button type="submit">Enviar al Espacio</button>
+            <textarea name="message" rows="3" placeholder="¿Cómo puedo ayudarte hoy?" required></textarea>
+            <button type="submit">Enviar Mensaje</button>
         </form>
     </div>
 
