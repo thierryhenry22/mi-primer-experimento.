@@ -1,3 +1,4 @@
+<script>
 // --- EL MEGA-CEREBRO DE HENRY AI ---
 const baseDeConocimiento = {
     tecnologia: {
@@ -22,19 +23,13 @@ const baseDeConocimiento = {
     }
 };
 
-// Función de búsqueda avanzada (Lógica de Intenciones)
 function analizarMensaje(mensaje) {
     const msg = mensaje.toLowerCase();
-    
-    // 1. Buscamos por categorías
     for (let categoria in baseDeConocimiento) {
         let match = baseDeConocimiento[categoria].keywords.some(word => msg.includes(word));
-        if (match) {
-            return baseDeConocimiento[categoria].respuesta;
-        }
+        if (match) return baseDeConocimiento[categoria].respuesta;
     }
     
-    // 2. Comandos especiales (Cambio de aura)
     if (msg.includes("cambia a") || msg.includes("color")) {
         const colores = ["red", "blue", "green", "gold", "purple", "cyan", "magenta"];
         let colorEncontrado = colores.find(c => msg.includes(c));
@@ -43,23 +38,18 @@ function analizarMensaje(mensaje) {
             return `Sintonizando aura a frecuencia ${colorEncontrado.toUpperCase()}.`;
         }
     }
-
     return "Interferencia detectada. No tengo registros sobre eso, pero mi red sigue expandiéndose.";
 }
 
-// Función principal de ejecución
 function procesarIA() {
     const inputField = document.getElementById('user-input');
     const mensajeUsuario = inputField.value;
-    
     if (mensajeUsuario.trim() === "") return;
-
     const respuestaFinal = analizarMensaje(mensajeUsuario);
     escribirEfecto(respuestaFinal);
-    inputField.value = ""; // Limpia la entrada para el siguiente comando
+    inputField.value = "";
 }
 
-// Mantenemos la función escribirEfecto que ya tienes...
 function escribirEfecto(texto) {
     let i = 0;
     const contenedor = document.getElementById('ai-response');
@@ -73,3 +63,9 @@ function escribirEfecto(texto) {
     }
     escribir();
 }
+
+// Para que funcione con la tecla Enter
+function handleEnter(e) {
+    if (e.key === 'Enter') procesarIA();
+}
+</script>
