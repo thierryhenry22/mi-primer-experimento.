@@ -213,28 +213,21 @@
         <p style="margin-top: 20px; font-size: 0.8rem; opacity: 0.5;">© 2026 HENRY GARCIA | ALL SYSTEMS OPERATIONAL</p>
     </footer>
 <script>
-    // 1. Definimos la función de lógica
-    function sistemaDeBienvenida() {
-        const ahora = new Date(); // Obtenemos la fecha y hora real
-        const hora = ahora.getHours(); // Extraemos solo la hora (0-23)
-        let saludo;
 
-        // 2. Aplicamos la Lógica de Decisión (Condicionales)
-        if (hora >= 6 && hora < 12) {
-            saludo = "SISTEMA INICIADO: BUENOS DÍAS, AGENTE.";
-        } else if (hora >= 12 && hora < 18) {
-            saludo = "SISTEMA INICIADO: BUENAS TARDES, AGENTE.";
-        } else {
-            saludo = "SISTEMA INICIADO: BUENAS NOCHES, AGENTE.";
-        }
-
-        // 3. Inyectamos el resultado en el HTML
-        document.getElementById('status-text').innerText = saludo;
-    }
-
-    // Ejecutamos la función al cargar la página
-    window.onload = sistemaDeBienvenida;
-</script>
-
+    function cambiarEnergia() {
+    // 1. Capturamos lo que el usuario está escribiendo
+    const colorEscrito = document.getElementById('color-input').value;
+    
+    // 2. Seleccionamos el panel que queremos que brille
+    const panel = document.querySelector('.glass-panel');
+    
+    // 3. Aplicamos la lógica: Si el usuario escribió algo, cámbialo
+    // Usamos el valor escrito para cambiar el borde y la sombra
+    panel.style.borderColor = colorEscrito;
+    panel.style.boxShadow = `0 0 30px ${colorEscrito}`;
+    
+    // 4. Extra: Cambiamos también el color del título para que combine
+    document.querySelector('h1').style.color = colorEscrito;
+}
 </body>
 </html>
