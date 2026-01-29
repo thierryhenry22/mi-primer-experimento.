@@ -3,99 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚀 El Universo de Henry</title>
+    <title>🌌 El Cosmos de Henry</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* FONDO ESPACIAL */
         body {
             margin: 0;
-            background-color: #0d0d1a;
+            padding: 20px;
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
             color: white;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Poppins', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: 20px;
+            overflow-x: hidden;
         }
 
-        /* --- FORMULARIO --- */
-        .form-container {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 30px;
+        /* CONTENEDOR CON BORDE DE NEÓN DINÁMICO */
+        .glass-card {
+            background: rgba(15, 15, 25, 0.8);
             border-radius: 20px;
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 210, 255, 0.3);
+            padding: 40px;
+            position: relative;
             width: 100%;
-            max-width: 380px;
+            max-width: 450px;
             text-align: center;
+            backdrop-filter: blur(10px);
+            border: 2px solid transparent;
+            /* El truco del borde degradado */
+            border-image: linear-gradient(45deg, #00f2fe, #7117ea, #ff00de) 1;
+            box-shadow: 0 0 40px rgba(0, 242, 254, 0.2);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, #00f2fe, #ff00de);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             margin-bottom: 30px;
         }
 
-        h2 { color: #00eaff; text-shadow: 0 0 10px #00eaff; margin-bottom: 20px; }
+        /* ESTILO DE LOS INPUTS */
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: #00f2fe;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
 
         input, textarea {
-            width: 100%; padding: 12px; margin-bottom: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px; color: white; outline: none;
-            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            border-radius: 5px;
+            color: white;
+            outline: none;
+            transition: 0.3s;
         }
 
-        button {
-            width: 100%; padding: 15px; background: #00eaff;
-            border: none; border-radius: 8px; color: #0d0d1a;
-            font-weight: bold; cursor: pointer; transition: 0.3s;
+        input:focus, textarea:focus {
+            border-color: #ff00de;
+            box-shadow: 0 0 15px rgba(255, 0, 222, 0.4);
         }
 
-        button:hover { background: #3a7bd5; color: white; transform: translateY(-3px); }
-
-        /* --- REDES SOCIALES --- */
-        .social-container {
-            display: flex;
-            gap: 25px;
-            justify-content: center;
-            margin-top: 10px;
-        }
-
-        .social-icon {
-            font-size: 2.5rem;
-            color: #00eaff;
+        /* BOTÓN GALÁCTICO */
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #00f2fe, #ff00de);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
             transition: 0.4s;
+            box-shadow: 0 5px 15px rgba(0, 242, 254, 0.4);
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px #ff00de;
+        }
+
+        /* CONTENEDOR DE REDES */
+        .social-title {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: #aaa;
+            text-transform: uppercase;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .icon-box {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
             text-decoration: none;
+            transition: 0.4s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .social-icon:hover {
-            color: #ff00de; /* Cambio a rosa neón al pasar el mouse */
-            transform: scale(1.2) rotate(10deg);
-            text-shadow: 0 0 20px #ff00de;
+        .icon-box:hover {
+            background: white;
+            color: black;
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.2);
         }
 
-        .tiktok:hover { color: #ff0050; text-shadow: 0 0 20px #ff0050; }
-        .instagram:hover { color: #e1306c; text-shadow: 0 0 20px #e1306c; }
+        .inst:hover { color: #e1306c; border-color: #e1306c; }
+        .tktk:hover { color: #00f2fe; border-color: #00f2fe; }
 
     </style>
 </head>
 <body>
 
-    <div class="form-container">
-        <h2>🚀 Contacto Espacial</h2>
+    <div class="glass-card">
+        <h1>Conecta con el Cosmos de Henry</h1>
+        
         <form action="https://formspree.io/f/xykjzqpy" method="POST">
-            <input type="text" name="name" placeholder="Tu Nombre" required>
-            <input type="email" name="email" placeholder="Tu Correo" required>
-            <textarea name="message" rows="3" placeholder="¿Qué hay de nuevo?" required></textarea>
-            <button type="submit">Enviar Mensaje</button>
+            <div class="input-group">
+                <label>Nombre:</label>
+                <input type="text" name="name" placeholder="Ej. Astro Henry" required>
+            </div>
+            
+            <div class="input-group">
+                <label>Email Galáctico:</label>
+                <input type="email" name="email" placeholder="tu@cosmos.com" required>
+            </div>
+
+            <div class="input-group">
+                <label>Mensaje:</label>
+                <textarea name="message" rows="3" placeholder="¿Qué mensaje envías a las estrellas?" required></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">Enviar al Hiperspacio</button>
         </form>
     </div>
 
-  <div class="social-container">
-        <a href="https://www.instagram.com/henry_wg22/" target="_blank" rel="noopener noreferrer" class="social-icon instagram">
+    <p class="social-title">Sigue mi trayectoria</p>
+    <div class="social-icons">
+        <a href="https://www.instagram.com/henry_wg22/" target="_blank" class="icon-box inst">
             <i class="fab fa-instagram"></i>
         </a>
-        <a href="https://www.tiktok.com/@henry_wg22" target="_blank" rel="noopener noreferrer" class="social-icon tiktok">
+        <a href="https://www.tiktok.com/@henry_wg22" target="_blank" class="icon-box tktk">
             <i class="fab fa-tiktok"></i>
         </a>
-    </div>    <p style="margin-top: 20px; font-size: 0.9rem; color: #b3e0ff;">Sígueme en mis redes</p>
+    </div>
 
 </body>
 </html>
+ 
