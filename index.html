@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✨ Henry - Interfaz principal</title>
+    <title>HENRY | Hub Central</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -15,174 +15,178 @@
 
         body {
             margin: 0;
-            background: #05050a;
-            color: #e0e0e0;
-            font-family: 'Rajdhani', sans-serif; /* Letra elegante y delgada */
+            background: #020205;
+            color: white;
+            font-family: 'Rajdhani', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* --- SECCIÓN 1: EL CORE (FORMULARIO) --- */
+        .hero-section {
+            height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
+            width: 100%;
         }
 
-        /* EL CONTENEDOR - CÁPSULA ELEGANTE */
         .glass-panel {
             background: rgba(255, 255, 255, 0.03);
-            border-radius: 50px 15px 50px 15px; /* Curvas asimétricas elegantes */
+            border-radius: 50px 15px 50px 15px;
             padding: 50px;
             position: relative;
-            width: 100%;
+            width: 90%;
             max-width: 420px;
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(15px);
             border: 1px solid rgba(0, 210, 255, 0.2);
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
             text-align: center;
         }
 
-        /* Brillo de neón animado en las esquinas */
-        .glass-panel::before {
+        /* Línea láser animada que recorre el borde */
+        .glass-panel::after {
             content: "";
             position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            border-radius: 50px 15px 50px 15px;
-            background: linear-gradient(45deg, var(--neon-blue), transparent, var(--neon-pink));
-            z-index: -1;
-            filter: blur(5px);
-            opacity: 0.5;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--neon-blue);
+            box-shadow: 0 0 15px var(--neon-blue);
+            animation: scan 3s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: 0; opacity: 0; }
+            50% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
         }
 
         h1 {
-            font-family: 'Orbitron', sans-serif; /* Letra de impacto */
-            font-weight: 700;
-            font-size: 1.5rem;
-            margin-bottom: 35px;
-            letter-spacing: 4px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            letter-spacing: 5px;
             color: white;
-            text-shadow: 0 0 15px var(--neon-blue);
-        }
-
-        /* FORMULARIO ESTILIZADO */
-        .input-box {
-            position: relative;
-            margin-bottom: 25px;
+            text-shadow: 0 0 10px var(--neon-blue);
+            margin-bottom: 30px;
         }
 
         input, textarea {
             width: 100%;
             background: transparent;
             border: none;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(0, 210, 255, 0.3);
             padding: 10px 0;
             color: white;
             font-size: 1.1rem;
-            font-family: 'Rajdhani', sans-serif;
+            margin-bottom: 25px;
             outline: none;
-            transition: 0.4s;
+            transition: 0.3s;
         }
 
-        input:focus, textarea:focus {
-            border-bottom: 2px solid var(--neon-blue);
-        }
+        input:focus { border-bottom: 1px solid var(--neon-pink); }
 
-        label {
-            position: absolute;
-            top: -15px;
-            left: 0;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--neon-blue);
-        }
-
-        /* BOTÓN DE DISEÑO ÚNICO */
         .btn-modern {
             background: transparent;
             color: white;
             border: 1px solid var(--neon-blue);
-            padding: 15px 30px;
+            padding: 15px 40px;
             border-radius: 30px;
-            cursor: pointer;
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.4s;
             letter-spacing: 2px;
-            transition: 0.5s;
-            overflow: hidden;
-            position: relative;
-            z-index: 1;
-        }
-
-        .btn-modern::before {
-            content: "";
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 210, 255, 0.4), transparent);
-            transition: 0.5s;
-            z-index: -1;
-        }
-
-        .btn-modern:hover::before {
-            left: 100%;
         }
 
         .btn-modern:hover {
-            box-shadow: 0 0 20px var(--neon-blue);
             background: var(--neon-blue);
-            color: #05050a;
+            color: black;
+            box-shadow: 0 0 20px var(--neon-blue);
         }
 
-        /* REDES SOCIALES MINIMALISTAS */
-        .social-links {
-            margin-top: 40px;
+        /* --- SECCIÓN 2: INFO EXTRA (INTERACTIVIDAD) --- */
+        .info-section {
+            padding: 100px 20px;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .card-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .mini-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            width: 200px;
+            border: 1px solid rgba(255, 0, 222, 0.2);
+            transition: 0.3s;
+        }
+
+        .mini-card:hover {
+            transform: scale(1.05);
+            border-color: var(--neon-pink);
+        }
+
+        .social-footer {
+            margin-top: 50px;
             display: flex;
             gap: 30px;
+            justify-content: center;
         }
 
-        .social-links a {
-            color: white;
-            font-size: 1.8rem;
-            transition: 0.3s;
-            opacity: 0.6;
-        }
-
-        .social-links a:hover {
-            opacity: 1;
-            transform: translateY(-5px);
-            color: var(--neon-pink);
-        }
+        .social-footer a { color: white; font-size: 2rem; transition: 0.3s; }
+        .social-footer a:hover { color: var(--neon-blue); transform: translateY(-5px); }
 
     </style>
 </head>
 <body>
 
-    <div class="glass-panel">
-        <h1>Centro de gestion</h1>
+    <section class="hero-section">
+        <div class="glass-panel">
+            <h1>LINK ESTABLISHED</h1>
+            <form action="https://formspree.io/f/xykjzqpy" method="POST">
+                <input type="text" name="name" placeholder="IDENTIFICADOR" required>
+                <input type="email" name="email" placeholder="FRECUENCIA (EMAIL)" required>
+                <textarea name="message" rows="2" placeholder="MENSAJE ENTRANTE..." required></textarea>
+                <button type="submit" class="btn-modern">ENVIAR SEÑAL</button>
+            </form>
+        </div>
         
-        <form action="https://formspree.io/f/xykjzqpy" method="POST">
-            <div class="input-box">
-                <label>Nombre de usuario</label>
-                <input type="text" name="name" placeholder="Tu Nombre" required>
+        <p style="margin-top: 40px; color: var(--neon-blue); font-size: 0.8rem; letter-spacing: 2px;">
+            DESLIZA PARA EXPLORAR <br> <i class="fas fa-chevron-down" style="margin-top: 10px;"></i>
+        </p>
+    </section>
+
+    <section class="info-section">
+        <h2 style="font-family: 'Orbitron'; margin-bottom: 50px;">DATOS DE NAVEGACIÓN</h2>
+        
+        <div class="card-container">
+            <div class="mini-card">
+                <i class="fas fa-rocket" style="color: var(--neon-blue); font-size: 2rem; margin-bottom: 10px;"></i>
+                <h3 style="font-family: 'Orbitron'; font-size: 0.8rem;">PROYECTOS</h3>
+                <p style="font-size: 0.9rem; opacity: 0.7;">Explorando nuevas fronteras digitales.</p>
             </div>
             
-            <div class="input-box">
-                <label>Correo electronico</label>
-                <input type="email" name="email" placeholder="tu@email.com" required>
+            <div class="mini-card">
+                <i class="fas fa-code" style="color: var(--neon-pink); font-size: 2rem; margin-bottom: 10px;"></i>
+                <h3 style="font-family: 'Orbitron'; font-size: 0.8rem;">SKILLS</h3>
+                <p style="font-size: 0.9rem; opacity: 0.7;">HTML5, CSS3, JavaScript & Diseño.</p>
             </div>
+        </div>
 
-            <div class="input-box">
-                <label>Motivo de visita</label>
-                <textarea name="message" rows="2" placeholder="Escribe aquí..." required></textarea>
-            </div>
-
-            <button type="submit" class="btn-modern">Enviar datos</button>
-        </form>
-    </div>
-
-    <div class="social-links">
-        <a href="https://www.instagram.com/henry_wg22/" target="_blank"><i class="fab fa-instagram"></i></a>
-        <a href="https://www.tiktok.com/@henry_wg22" target="_blank"><i class="fab fa-tiktok"></i></a>
-    </div>
+        <div class="social-footer">
+            <a href="https://www.instagram.com/henry_wg22/" target="_blank"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.tiktok.com/@henry_wg22" target="_blank"><i class="fab fa-tiktok"></i></a>
+        </div>
+    </section>
 
 </body>
 </html>
