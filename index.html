@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HENRY | Hub Central</title>
+    <title>Henry | Dev & Design Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -11,6 +11,7 @@
         :root {
             --neon-blue: #00d2ff;
             --neon-pink: #ff00de;
+            --glass: rgba(255, 255, 255, 0.03);
         }
 
         body {
@@ -18,43 +19,93 @@
             background: #020205;
             color: white;
             font-family: 'Rajdhani', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-x: hidden;
             scroll-behavior: smooth;
         }
 
-        /* --- SECCIÓN 1: EL CORE (FORMULARIO) --- */
-        .hero-section {
+        /* --- SECCIÓN HERO --- */
+        .hero {
             height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 100%;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .hero h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.5rem, 5vw, 3rem);
+            letter-spacing: 8px;
+            margin: 0;
+            background: linear-gradient(to right, var(--neon-blue), var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+
+        /* --- SECCIÓN SKILLS (INTERACTIVA) --- */
+        .skills-container {
+            padding: 100px 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .skill-card {
+            background: var(--glass);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 210, 255, 0.2);
+            text-align: center;
+            transition: 0.5s;
+        }
+
+        .skill-card:hover {
+            border-color: var(--neon-pink);
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(255, 0, 222, 0.2);
+        }
+
+        .skill-card i {
+            font-size: 3rem;
+            color: var(--neon-blue);
+            margin-bottom: 20px;
+        }
+
+        /* --- FORMULARIO ESTILO COMANDO --- */
+        .contact-section {
+            padding: 100px 20px;
+            display: flex;
+            justify-content: center;
         }
 
         .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 50px 15px 50px 15px;
+            background: var(--glass);
+            border-radius: 50px 15px;
             padding: 50px;
-            position: relative;
-            width: 90%;
-            max-width: 420px;
+            width: 100%;
+            max-width: 450px;
             backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 210, 255, 0.2);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
-            text-align: center;
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            position: relative;
         }
 
-        /* Línea láser animada que recorre el borde */
+        /* El efecto láser que te gustó */
         .glass-panel::after {
             content: "";
             position: absolute;
             top: 0; left: 0; width: 100%; height: 2px;
             background: var(--neon-blue);
-            box-shadow: 0 0 15px var(--neon-blue);
             animation: scan 3s linear infinite;
         }
 
@@ -64,40 +115,29 @@
             100% { top: 100%; opacity: 0; }
         }
 
-        h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.4rem;
-            letter-spacing: 5px;
-            color: white;
-            text-shadow: 0 0 10px var(--neon-blue);
-            margin-bottom: 30px;
-        }
-
         input, textarea {
             width: 100%;
             background: transparent;
             border: none;
-            border-bottom: 1px solid rgba(0, 210, 255, 0.3);
-            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 0;
             color: white;
-            font-size: 1.1rem;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             outline: none;
-            transition: 0.3s;
+            font-family: 'Rajdhani';
+            font-size: 1.1rem;
         }
 
-        input:focus { border-bottom: 1px solid var(--neon-pink); }
-
         .btn-modern {
+            width: 100%;
+            padding: 15px;
             background: transparent;
             color: white;
             border: 1px solid var(--neon-blue);
-            padding: 15px 40px;
-            border-radius: 30px;
-            font-family: 'Orbitron', sans-serif;
+            font-family: 'Orbitron';
             cursor: pointer;
             transition: 0.4s;
-            letter-spacing: 2px;
+            border-radius: 5px;
         }
 
         .btn-modern:hover {
@@ -106,87 +146,69 @@
             box-shadow: 0 0 20px var(--neon-blue);
         }
 
-        /* --- SECCIÓN 2: INFO EXTRA (INTERACTIVIDAD) --- */
-        .info-section {
-            padding: 100px 20px;
-            width: 100%;
-            max-width: 800px;
+        footer {
+            padding: 50px;
             text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .card-container {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .mini-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            border-radius: 15px;
-            width: 200px;
-            border: 1px solid rgba(255, 0, 222, 0.2);
+        .social-icons a {
+            color: white;
+            font-size: 1.8rem;
+            margin: 0 15px;
             transition: 0.3s;
         }
 
-        .mini-card:hover {
-            transform: scale(1.05);
-            border-color: var(--neon-pink);
-        }
-
-        .social-footer {
-            margin-top: 50px;
-            display: flex;
-            gap: 30px;
-            justify-content: center;
-        }
-
-        .social-footer a { color: white; font-size: 2rem; transition: 0.3s; }
-        .social-footer a:hover { color: var(--neon-blue); transform: translateY(-5px); }
-
+        .social-icons a:hover { color: var(--neon-pink); }
     </style>
 </head>
 <body>
 
-    <section class="hero-section">
-        <div class="glass-panel">
-            <h1>LINK ESTABLISHED</h1>
-            <form action="https://formspree.io/f/xykjzqpy" method="POST">
-                <input type="text" name="name" placeholder="IDENTIFICADOR" required>
-                <input type="email" name="email" placeholder="FRECUENCIA (EMAIL)" required>
-                <textarea name="message" rows="2" placeholder="MENSAJE ENTRANTE..." required></textarea>
-                <button type="submit" class="btn-modern">ENVIAR SEÑAL</button>
-            </form>
+    <section class="hero">
+        <h1>HENRY GARCIA</h1>
+        <p>Creative Developer & UI Designer</p>
+        <div style="margin-top: 30px; color: var(--neon-blue); animation: bounce 2s infinite;">
+            <i class="fas fa-chevron-down"></i>
         </div>
-        
-        <p style="margin-top: 40px; color: var(--neon-blue); font-size: 0.8rem; letter-spacing: 2px;">
-            DESLIZA PARA EXPLORAR <br> <i class="fas fa-chevron-down" style="margin-top: 10px;"></i>
-        </p>
     </section>
 
-    <section class="info-section">
-        <h2 style="font-family: 'Orbitron'; margin-bottom: 50px;">DATOS DE NAVEGACIÓN</h2>
-        
-        <div class="card-container">
-            <div class="mini-card">
-                <i class="fas fa-rocket" style="color: var(--neon-blue); font-size: 2rem; margin-bottom: 10px;"></i>
-                <h3 style="font-family: 'Orbitron'; font-size: 0.8rem;">PROYECTOS</h3>
-                <p style="font-size: 0.9rem; opacity: 0.7;">Explorando nuevas fronteras digitales.</p>
-            </div>
-            
-            <div class="mini-card">
-                <i class="fas fa-code" style="color: var(--neon-pink); font-size: 2rem; margin-bottom: 10px;"></i>
-                <h3 style="font-family: 'Orbitron'; font-size: 0.8rem;">SKILLS</h3>
-                <p style="font-size: 0.9rem; opacity: 0.7;">HTML5, CSS3, JavaScript & Diseño.</p>
-            </div>
+    <section class="skills-container">
+        <div class="skill-card">
+            <i class="fas fa-code"></i>
+            <h3 style="font-family: 'Orbitron';">DEVELOPMENT</h3>
+            <p>Construcción de interfaces interactivas con código limpio y eficiente.</p>
         </div>
+        <div class="skill-card">
+            <i class="fas fa-paint-brush"></i>
+            <h3 style="font-family: 'Orbitron';">DESIGN</h3>
+            <p>Diseño de experiencias de usuario con estética futurista y moderna.</p>
+        </div>
+        <div class="skill-card">
+            <i class="fas fa-terminal"></i>
+            <h3 style="font-family: 'Orbitron';">SOLUTIONS</h3>
+            <p>Arquitectura de sistemas digitales personalizados para cada proyecto.</p>
+        </div>
+    </section>
 
-        <div class="social-footer">
+    <section class="contact-section">
+        <div class="glass-panel">
+            <h2 style="font-family: 'Orbitron'; text-align: center; margin-bottom: 40px;">INICIAR PROYECTO</h2>
+            <form action="https://formspree.io/f/xykjzqpy" method="POST">
+                <input type="text" name="name" placeholder="NOMBRE DEL CLIENTE" required>
+                <input type="email" name="email" placeholder="CORREO ELECTRÓNICO" required>
+                <textarea name="message" rows="3" placeholder="DETALLES DEL PROYECTO..." required></textarea>
+                <button type="submit" class="btn-modern">ENVIAR PROPUESTA</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <div class="social-icons">
             <a href="https://www.instagram.com/henry_wg22/" target="_blank"><i class="fab fa-instagram"></i></a>
             <a href="https://www.tiktok.com/@henry_wg22" target="_blank"><i class="fab fa-tiktok"></i></a>
         </div>
-    </section>
+        <p style="margin-top: 20px; font-size: 0.8rem; opacity: 0.5;">© 2026 HENRY GARCIA | ALL SYSTEMS OPERATIONAL</p>
+    </footer>
 
 </body>
 </html>
