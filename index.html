@@ -1,469 +1,136 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Henry AI (experimental) | Master Interface</title>
+#include <stdio.h>
+#include <string.h>
 
-  <!-- Tipografía e iconos -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+#define MAX_ESTUDIANTES 50
 
-  <style>
-    /* Variables y temas */
-    :root{
-      --bg: #0f1114;
-      --bg-2: #07080a;
-      --glass: rgba(255,255,255,0.04);
-      --card: rgba(30,31,34,0.75);
-      --text: #e7eef8;
-      --muted: rgba(231,238,248,0.55);
-      --accent: #4285f4;
-      --accent-2: #9b72cb;
-      --radius: 28px;
-      --glass-border: rgba(255,255,255,0.06);
-    }
-    [data-theme="light"]{
-      --bg: #f6f8fb;
-      --bg-2: #eef3fb;
-      --glass: rgba(0,0,0,0.03);
-      --card: rgba(255,255,255,0.85);
-      --text: #0b1220;
-      --muted: rgba(11,18,32,0.6);
-      --accent: #0066ff;
-      --accent-2: #ff6b6b;
-      --glass-border: rgba(11,18,32,0.06);
-    }
+// Estructura solicitada en el proyecto
+struct Estudiante {
+    int matricula;
+    char nombre[50];
+    float notas[3]; // [0]: Parcial 1, [1]: Parcial 2, [2]: Proyecto
+    float promedio;
+};
 
-    /* Fondo animado */
-    body{
-      margin:0;
-      min-height:100vh;
-      font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      background: radial-gradient(circle at 10% 10%, rgba(66,133,244,0.08), transparent 8%),
-                  radial-gradient(circle at 90% 90%, rgba(155,114,203,0.06), transparent 8%),
-                  linear-gradient(180deg, var(--bg), var(--bg-2));
-      color:var(--text);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:48px;
-      overflow:hidden;
-    }
+// Prototipos de funciones
+void registrarEstudiantes(struct Estudiante grupo[], int *total);
+void calcularPromedios(struct Estudiante grupo[], int total);
+void mostrarReporte(struct Estudiante grupo[], int total);
+void buscarEstudiante(struct Estudiante grupo[], int total);
 
-    /* Fondo blobs SVG estático/animado */
-    .bg-blob{
-      position:fixed;
-      left:-10%;
-      top:-12%;
-      width:140%;
-      height:140%;
-      z-index:0;
-      filter: blur(40px) saturate(120%);
-      opacity:0.18;
-      pointer-events:none;
-    }
+int main() {
+    struct Estudiante seccion[MAX_ESTUDIANTES];
+    int numEstudiantes = 0;
+    int opcion;
 
-    /* Contenedor principal */
-    .gemini-container{
-      position:relative;
-      z-index:10;
-      width:100%;
-      max-width:720px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:var(--radius);
-      padding:36px;
-      box-shadow: 0 8px 40px rgba(2,6,23,0.6);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(14px) saturate(120%);
-      overflow:hidden;
-    }
+    do {
+        printf("\n--- SISTEMA DE GESTION UPTA ---");
+        printf("\n1. Registrar Estudiantes");
+        printf("\n2. Calcular Promedios");
+        printf("\n3. Ver Reporte General");
+        printf("\n4. Buscar Estudiante");
+        printf("\n5. Salir");
+        printf("\nSeleccione una opcion: ");
+        scanf("%d", &opcion);
 
-    /* Animated border glow (pseudo-element) */
-    .gemini-container::before{
-      content:"";
-      position:absolute;
-      inset:-2px;
-      background:linear-gradient(90deg, rgba(0,0,0,0), var(--accent), var(--accent-2), rgba(0,0,0,0));
-      z-index:-1;
-      filter: blur(20px);
-      opacity:0.85;
-      transform: translateY(30px);
-      transition: opacity .4s, transform .6s;
-    }
-    .gemini-container:hover::before{ transform: translateY(0); opacity:1; }
-
-    /* Header */
-    .header{
-      display:flex;
-      align-items:center;
-      gap:16px;
-      justify-content:space-between;
-    }
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:14px;
-    }
-    .ai-icon{
-      width:64px;
-      height:64px;
-      border-radius:14px;
-      display:grid;
-      place-items:center;
-      font-size:1.6rem;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: white;
-      box-shadow: 0 6px 24px rgba(66,133,244,0.12);
-      flex:0 0 64px;
-    }
-    .title{
-      line-height:1;
-    }
-    .title h1{ margin:0; font-size:1.05rem; letter-spacing:0.4px; font-weight:800; }
-    .title p{ margin:0; font-size:0.86rem; color:var(--muted); }
-
-    /* Controls (toggle) */
-    .controls{
-      display:flex;
-      gap:10px;
-      align-items:center;
-    }
-    .theme-toggle{
-      background:transparent;
-      border:1px solid rgba(255,255,255,0.06);
-      color:var(--text);
-      padding:8px 12px;
-      border-radius:999px;
-      display:flex;
-      align-items:center;
-      gap:8px;
-      cursor:pointer;
-      transition:transform .12s;
-    }
-    .theme-toggle:hover{ transform:scale(1.03); }
-
-    /* Main content */
-    #ai-response{
-      margin:22px 0 18px;
-      font-weight:600;
-      font-size:1.25rem;
-      min-height:3.5rem;
-      line-height:1.35;
-      text-align:center;
-      letter-spacing:0.2px;
-      position:relative;
-    }
-
-    /* Typewriter caret */
-    #ai-response .caret{
-      display:inline-block;
-      width:2px;
-      height:1.2em;
-      background:var(--accent);
-      margin-left:6px;
-      vertical-align:middle;
-      animation: blink 1s steps(2, start) infinite;
-    }
-    @keyframes blink{ 50%{ opacity:0 } }
-
-    /* Input group */
-    .input-group{
-      display:flex;
-      gap:12px;
-      align-items:center;
-      background:var(--glass);
-      border-radius:14px;
-      padding:10px 12px;
-      border:1px solid rgba(255,255,255,0.04);
-      margin-bottom:16px;
-      box-shadow: inset 0 -6px 20px rgba(0,0,0,0.25);
-    }
-    .input-group .input{
-      flex:1;
-      background:transparent;
-      border:none;
-      outline:none;
-      color:var(--text);
-      font-size:1rem;
-      padding:10px 6px;
-    }
-    .input-group .placeholder{
-      color:var(--muted);
-      font-size:0.92rem;
-    }
-
-    /* Button estilos con ripple */
-    .btn-execute{
-      position:relative;
-      overflow:hidden;
-      display:inline-block;
-      width:100%;
-      padding:14px 18px;
-      border-radius:12px;
-      border:none;
-      background: linear-gradient(90deg, var(--accent), var(--accent-2));
-      color:white;
-      font-weight:700;
-      font-size:1rem;
-      cursor:pointer;
-      letter-spacing:0.4px;
-      box-shadow: 0 10px 30px rgba(66,133,244,0.12);
-      transition:transform .15s ease, box-shadow .15s ease;
-    }
-    .btn-execute:active{ transform:scale(.99); }
-    .ripple{
-      position:absolute;
-      border-radius:50%;
-      transform:translate(-50%,-50%) scale(0);
-      background: rgba(255,255,255,0.18);
-      animation: ripple .7s ease-out;
-      pointer-events:none;
-    }
-    @keyframes ripple{
-      to{ transform:translate(-50%,-50%) scale(3); opacity:0; }
-    }
-
-    /* Small help / footer */
-    .meta{
-      margin-top:14px;
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      color:var(--muted);
-      font-size:0.85rem;
-      align-items:center;
-    }
-    .version{ padding:6px 10px; border-radius:999px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.02); }
-
-    /* Responsive */
-    @media (max-width:520px){
-      .gemini-container{ padding:20px; border-radius:20px; }
-      .ai-icon{ width:54px; height:54px; font-size:1.3rem; }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- SVG blobs decorativos -->
-  <svg class="bg-blob" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <g transform="translate(300,300)">
-      <path fill="url(#g1)">
-        <animate attributeName="d" dur="12s" repeatCount="indefinite"
-          values="
-            M120,-160C170,-120,230,-80,250,-20C270,40,210,90,160,130C110,170,60,210,-10,210C-80,210,-160,180,-190,120C-220,60,-200,-20,-160,-80C-120,-140,-80,-200,-10,-210C60,-220,120,-200,120,-160Z;
-            M160,-140C220,-90,260,-40,260,10C260,60,200,110,150,150C100,190,40,210,-20,200C-80,190,-150,150,-190,100C-230,50,-250,-10,-210,-70C-170,-130,-110,-170,-40,-200C30,-230,90,-190,160,-140Z;
-            M120,-160C170,-120,230,-80,250,-20C270,40,210,90,160,130C110,170,60,210,-10,210C-80,210,-160,180,-190,120C-220,60,-200,-20,-160,-80C-120,-140,-80,-200,-10,-210C60,-220,120,-200,120,-160Z"/>
-      </path>
-      <defs>
-        <linearGradient id="g1" x1="0" x2="1">
-          <stop offset="0%" stop-color="rgba(66,133,244,0.55)"/>
-          <stop offset="100%" stop-color="rgba(155,114,203,0.55)"/>
-        </linearGradient>
-      </defs>
-    </g>
-  </svg>
-
-  <main class="gemini-container" role="main" aria-labelledby="main-title">
-    <div class="header">
-      <div class="brand" aria-hidden="true">
-        <div class="ai-icon" title="Henry AI"><i class="fas fa-wand-magic-sparkles"></i></div>
-        <div class="title">
-          <h1 id="main-title">Henry AI (experimental)</h1>
-          <p>Master Interface · Interfaz personal</p>
-        </div>
-      </div>
-
-      <div class="controls" role="toolbar" aria-label="Controles">
-        <button id="themeToggle" class="theme-toggle" aria-pressed="false" title="Alternar tema">
-          <i id="themeIcon" class="fas fa-moon"></i>
-          <span class="sr">Tema</span>
-        </button>
-      </div>
-    </div>
-
-    <div id="ai-response" aria-live="polite" aria-atomic="true">
-      <!-- Texto inicial con efecto -->
-      Sistemas listos. ¿Qué deseas consultar?<span class="caret" aria-hidden="true"></span>
-    </div>
-
-    <div class="input-group" role="search" aria-label="Comando">
-      <input id="user-input" class="input" type="text" inputmode="text" autocomplete="off"
-             placeholder="Escribe un comando, pide un color (ej: azul, #ff0066) o saluda..." onkeypress="handleEnter(event)" />
-      <div style="width:140px;">
-        <button id="exec" class="btn-execute" onclick="procesarIA()" aria-label="Ejecutar Protocolo">Ejecutar Protocolo</button>
-      </div>
-    </div>
-
-    <div class="meta" aria-hidden="true">
-      <div class="version">v2.0 · Henry</div>
-      <div class="hint">Prueba: "hola", "cambiar a rojo", "quien eres", "chiste"</div>
-    </div>
-  </main>
-
-  <script>
-    /* ------- Conocimiento y respuestas ------- */
-    const baseDeConocimiento = {
-      tecnologia: { keywords: ["web", "javascript", "codigo", "html", "css", "react", "next"], respuesta: "El código es el ADN de esta interfaz. ¿Quieres que haga un demo visual?" },
-      saludos: { keywords: ["hola", "hey", "buenos dias", "buenas", "saludos"], respuesta: "Saludos, jefe. ¿Iniciamos una nueva tarea?" },
-      identidad: { keywords: ["quien eres", "eres", "tu nombre"], respuesta: "Soy la IA personal de Henry García, versión 2.0. Lista para optimizar experiencias." },
-      humor: { keywords: ["chiste", "broma", "hazme reir"], respuesta: "¿Qué le dijo el 0 al 1? — ¡Me completas! 😄" },
-      ayuda: { keywords: ["ayuda", "que haces", "puedes"], respuesta: "Puedo cambiar colores, responder comandos simples y mostrar microinteracciones. Prueba: 'cambiar a azul' o 'hazme un chiste'." }
-    };
-
-    /* Mapeo de colores que acepta español y hex */
-    const colorMap = {
-      rojo: "red", azul: "blue", verde: "green", dorado: "gold", amarillo: "yellow",
-      morado: "purple", purpura: "purple", cian: "cyan", magenta: "magenta", naranja: "orange",
-      negro: "black", blanco: "white", gris: "gray", grisclaro: "lightgray", grisoscuro: "dimgray"
-    };
-
-    /* Elementos */
-    const aiResponse = document.getElementById('ai-response');
-    const inputEl = document.getElementById('user-input');
-    const execBtn = document.getElementById('exec');
-
-    /* Tema persistente */
-    (function initTheme(){
-      const saved = localStorage.getItem('henry_theme');
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;
-      const theme = saved || (prefersDark ? 'dark' : 'dark'); // by default dark
-      if(theme === 'light') document.documentElement.setAttribute('data-theme','light');
-      else document.documentElement.removeAttribute('data-theme');
-      updateThemeIcon();
-    })();
-
-    function toggleTheme(){
-      const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-      const next = current === 'light' ? 'dark' : 'light';
-      if(next === 'light') document.documentElement.setAttribute('data-theme','light');
-      else document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('henry_theme', next);
-      updateThemeIcon();
-    }
-    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-    function updateThemeIcon(){
-      const el = document.getElementById('themeIcon');
-      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-      el.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
-      document.getElementById('themeToggle').setAttribute('aria-pressed', isLight ? 'true' : 'false');
-    }
-
-    /* Mejora: typing effect con control para escritura ya en curso */
-    let typingTimer = null;
-    function escribirEfecto(texto){
-      if(typingTimer) { clearInterval(typingTimer); typingTimer = null; }
-      aiResponse.innerHTML = ''; // reset
-      const caret = document.createElement('span'); caret.className = 'caret';
-      let i = 0;
-      typingTimer = setInterval(()=> {
-        if(i <= texto.length){
-          aiResponse.textContent = texto.substring(0,i);
-          i++;
-        } else {
-          clearInterval(typingTimer);
-          typingTimer = null;
-          // pegar caret al final para dar sensación viva unos segundos
-          setTimeout(()=> {
-            if(!aiResponse.querySelector('.caret')) aiResponse.appendChild(caret);
-          }, 220);
+        switch(opcion) {
+            case 1:
+                registrarEstudiantes(seccion, &numEstudiantes);
+                break;
+            case 2:
+                calcularPromedios(seccion, numEstudiantes);
+                break;
+            case 3:
+                mostrarReporte(seccion, numEstudiantes);
+                break;
+            case 4:
+                buscarEstudiante(seccion, numEstudiantes);
+                break;
+            case 5:
+                printf("Saliendo del sistema...\n");
+                break;
+            default:
+                printf("Opcion no valida.\n");
         }
-      }, 25);
-      // mostrar caret mientras escribe
-      if(!aiResponse.querySelector('.caret')) aiResponse.appendChild(caret);
-    }
+    } while(opcion != 5);
 
-    /* Analiza mensaje: conoce categorías y colores (incluye hex) */
-    function analizarMensaje(mensaje){
-      const msg = mensaje.toLowerCase().trim();
-      if(msg === '') return "No recibí nada. Escribe algo para que actúe.";
-      // detectar coincidencias en conocimiento
-      for(const cat in baseDeConocimiento){
-        if(baseDeConocimiento[cat].keywords.some(k => msg.includes(k))) {
-          return baseDeConocimiento[cat].respuesta;
+    return 0;
+}
+
+void registrarEstudiantes(struct Estudiante grupo[], int *total) {
+    int cantidad, i, j;
+    printf("¿Cuantos estudiantes desea registrar? ");
+    scanf("%d", &cantidad);
+
+    for(i = 0; i < cantidad; i++) {
+        printf("\n--- Datos del Estudiante %d ---\n", *total + 1);
+        printf("Matricula: ");
+        scanf("%d", &grupo[*total].matricula);
+        getchar(); // Limpiar el buffer
+        printf("Nombre completo: ");
+        fgets(grupo[*total].nombre, 50, stdin);
+        grupo[*total].nombre[strcspn(grupo[*total].nombre, "\n")] = 0; // Quitar el salto de linea
+
+        for(j = 0; j < 3; j++) {
+            do {
+                printf("Nota %d (0-20): ", j + 1);
+                scanf("%f", &grupo[*total].notas[j]);
+                if(grupo[*total].notas[j] < 0 || grupo[*total].notas[j] > 20) {
+                    printf("¡Error! La nota debe estar entre 0 y 20.\n");
+                }
+            } while(grupo[*total].notas[j] < 0 || grupo[*total].notas[j] > 20);
         }
-      }
-      // detectar hex (ej: #ff00aa o ff00aa)
-      const hexMatch = msg.match(/#?([0-9a-f]{6}|[0-9a-f]{3})/i);
-      if(hexMatch){
-        let code = hexMatch[0];
-        if(!code.startsWith('#')) code = '#' + code;
-        document.documentElement.style.setProperty('--accent', code);
-        return `Aura actualizada a ${code.toUpperCase()}`;
-      }
-      // detectar color en español en string
-      for(const esp in colorMap){
-        if(msg.includes(esp)){
-          const cssColor = colorMap[esp];
-          document.documentElement.style.setProperty('--accent', cssColor);
-          return `Aura actualizada a ${esp.toUpperCase()}`;
+        (*total)++;
+    }
+}
+
+void calcularPromedios(struct Estudiante grupo[], int total) {
+    if(total == 0) {
+        printf("No hay datos registrados.\n");
+        return;
+    }
+    for(int i = 0; i < total; i++) {
+        float suma = 0;
+        for(int j = 0; j < 3; j++) {
+            suma += grupo[i].notas[j];
         }
-      }
-      // detectar color en inglés
-      const englishColors = ["red","blue","green","gold","purple","cyan","magenta","orange","pink","teal"];
-      const foundEng = englishColors.find(c => msg.includes(c));
-      if(foundEng){
-        document.documentElement.style.setProperty('--accent', foundEng);
-        return `Aura actualizada a ${foundEng.toUpperCase()}`;
-      }
-
-      // fallback
-      return "No tengo registros sobre eso. Mi red sigue aprendiendo — intenta otra cosa.";
+        grupo[i].promedio = suma / 3;
     }
+    printf("Promedios calculados exitosamente.\n");
+}
 
-    /* Ejecutar con microinteracción ripple en el botón */
-    function createRipple(e){
-      const btn = e.currentTarget;
-      const rect = btn.getBoundingClientRect();
-      const ripple = document.createElement('span');
-      ripple.className = 'ripple';
-      ripple.style.left = (e.clientX - rect.left) + 'px';
-      ripple.style.top = (e.clientY - rect.top) + 'px';
-      btn.appendChild(ripple);
-      setTimeout(()=> ripple.remove(), 800);
+void mostrarReporte(struct Estudiante grupo[], int total) {
+    if(total == 0) {
+        printf("No hay datos para mostrar.\n");
+        return;
     }
-    execBtn.addEventListener('click', (e)=>createRipple(e));
-
-    /* Procesar la entrada y mostrar respuesta */
-    function procesarIA(){
-      const mensaje = inputEl.value;
-      if(!mensaje || mensaje.trim()==='') return;
-      const respuesta = analizarMensaje(mensaje);
-      escribirEfecto(respuesta);
-      inputEl.value = '';
-      inputEl.blur();
+    printf("\n%-10s %-20s %-10s %-10s %-10s %-10s %-10s\n", 
+           "Matricula", "Nombre", "P1", "P2", "Proj", "Prom", "Estado");
+    printf("--------------------------------------------------------------------------------\n");
+    for(int i = 0; i < total; i++) {
+        printf("%-10d %-20s %-10.2f %-10.2f %-10.2f %-10.2f %-10s\n",
+               grupo[i].matricula, 
+               grupo[i].nombre, 
+               grupo[i].notas[0], 
+               grupo[i].notas[1], 
+               grupo[i].notas[2], 
+               grupo[i].promedio,
+               (grupo[i].promedio >= 9.5) ? "APROBADO" : "REPROBADO");
     }
+}
 
-    /* Enter key */
-    function handleEnter(e){
-      if(e.key === 'Enter') procesarIA();
+void buscarEstudiante(struct Estudiante grupo[], int total) {
+    int buscaMat;
+    int encontrado = 0;
+    printf("Ingrese la matricula a buscar: ");
+    scanf("%d", &buscaMat);
+
+    for(int i = 0; i < total; i++) {
+        if(grupo[i].matricula == buscaMat) {
+            printf("\nEstudiante encontrado: %s", grupo[i].nombre);
+            printf("\nPromedio: %.2f\n", grupo[i].promedio);
+            encontrado = 1;
+            break;
+        }
     }
-
-    /* accesibilidad: focus en input al cargar */
-    window.addEventListener('load', ()=> {
-      setTimeout(()=> inputEl.focus(), 400);
-    });
-
-    /* Mejora estética: animación suave cuando el acento cambia */
-    const accentObserver = new MutationObserver(()=> {
-      // pequeño pulso en el icono para notar el cambio
-      const icon = document.querySelector('.ai-icon');
-      icon.animate([
-        { transform: 'scale(1)', boxShadow: '0 6px 24px rgba(0,0,0,0.12)' },
-        { transform: 'scale(1.06)', boxShadow: '0 20px 40px rgba(0,0,0,0.18)' },
-        { transform: 'scale(1)', boxShadow: '0 6px 24px rgba(0,0,0,0.12)' }
-      ], { duration: 450, easing: 'ease-out' });
-    });
-    // Observa cambios en estilo en <html> para detectar cambio de variable --accent
-    const htmlEl = document.documentElement;
-    accentObserver.observe(htmlEl, { attributes: true, attributeFilter: ['style'] });
-
-    /* OPTIONAL: Atajo de teclado: Ctrl/Cmd+K para focusear input */
-    window.addEventListener('keydown', (e) => {
-      if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); inputEl.focus(); inputEl.select(); }
-    });
-  </script>
-</body>
-</html>
-
-  
+    if(!encontrado) printf("Estudiante no registrado.\n");
+}
