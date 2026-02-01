@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IA Core - Elite Interface</title>
+    <title>Neural Core Pro - Reasoning AI</title>
     <style>
         :root {
             --primary: #8b5cf6;
@@ -14,14 +14,11 @@
         }
 
         * { box-sizing: border-box; }
-
         body {
             margin: 0;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background: var(--bg);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.15) 0px, transparent 50%);
+            background-image: radial-gradient(circle at 50% -20%, #1e1b4b, #030712);
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -30,7 +27,7 @@
             overflow: hidden;
         }
 
-        /* --- MENÚ HAMBURGUESA --- */
+        /* --- MENÚ LATERAL --- */
         .menu-btn {
             position: absolute;
             top: 25px;
@@ -38,13 +35,10 @@
             z-index: 100;
             cursor: pointer;
             background: var(--glass);
-            padding: 10px;
+            padding: 12px;
             border-radius: 12px;
             border: 1px solid var(--border);
-            transition: 0.3s;
         }
-
-        .menu-btn:hover { background: rgba(255,255,255,0.1); }
 
         .sidebar {
             position: fixed;
@@ -52,169 +46,161 @@
             top: 0;
             width: 280px;
             height: 100%;
-            background: rgba(3, 7, 18, 0.95);
+            background: rgba(3, 7, 18, 0.98);
             backdrop-filter: blur(20px);
             z-index: 99;
-            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: 0.4s;
             border-right: 1px solid var(--border);
             padding: 80px 20px;
         }
 
         .sidebar.active { left: 0; }
 
-        .sidebar a {
-            display: block;
+        /* --- SELECTOR DE MODOS --- */
+        .modes-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: 1px solid var(--border);
             color: #94a3b8;
-            text-decoration: none;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 10px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
             transition: 0.3s;
         }
 
-        .sidebar a:hover { background: var(--glass); color: white; }
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+        }
 
         /* --- CONTENEDOR PRINCIPAL --- */
         .main-wrapper {
             width: 95%;
-            max-width: 1000px;
+            max-width: 900px;
             height: 85vh;
-            position: relative;
             background: var(--glass);
             border-radius: 30px;
             border: 1px solid var(--border);
             backdrop-filter: blur(20px);
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 40px rgba(0,0,0,0.5);
-        }
-
-        .header {
-            padding: 25px;
-            text-align: center;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            background: linear-gradient(to right, #a78bfa, #22d3ee);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 2px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
         }
 
         .chat-box {
             flex: 1;
-            padding: 30px;
+            padding: 25px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
 
-        /* --- BURBUJAS --- */
+        /* --- ESTILOS DE MENSAJES --- */
         .msg {
-            max-width: 80%;
-            padding: 16px 24px;
-            border-radius: 22px;
+            max-width: 85%;
+            padding: 15px 22px;
+            border-radius: 20px;
             font-size: 1rem;
-            line-height: 1.6;
-            animation: slideUp 0.4s ease-out;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
         }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .ai { background: rgba(255,255,255,0.03); border: 1px solid var(--border); align-self: flex-start; }
+        .user { background: var(--primary); align-self: flex-end; }
+
+        /* Cuadro de razonamiento */
+        .thought-process {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            border-left: 2px solid var(--secondary);
+            padding-left: 15px;
+            margin-bottom: 10px;
+            font-style: italic;
         }
 
-        .ai {
-            align-self: flex-start;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(6, 182, 212, 0.1));
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-bottom-left-radius: 4px;
-        }
-
-        .user {
-            align-self: flex-end;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            border-bottom-right-radius: 4px;
-        }
-
-        /* --- INPUT AREA --- */
-        .input-container {
-            padding: 30px;
-            background: rgba(0,0,0,0.2);
+        /* --- INPUT --- */
+        .input-area {
+            padding: 25px;
             display: flex;
-            gap: 15px;
+            gap: 10px;
         }
 
         input {
             flex: 1;
-            background: rgba(255,255,255,0.03);
+            background: rgba(255,255,255,0.05);
             border: 1px solid var(--border);
-            padding: 16px 25px;
-            border-radius: 18px;
+            padding: 15px 25px;
+            border-radius: 15px;
             color: white;
             outline: none;
-            transition: 0.3s;
         }
 
-        input:focus { border-color: var(--primary); background: rgba(255,255,255,0.06); }
-
-        button {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        .send-btn {
+            background: white;
+            color: black;
             border: none;
-            padding: 0 30px;
-            border-radius: 18px;
-            color: white;
-            font-weight: 600;
+            padding: 0 25px;
+            border-radius: 15px;
+            font-weight: bold;
             cursor: pointer;
-            transition: 0.3s;
         }
 
-        button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3); }
-
-        /* Scrollbar Personalizada */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); }
     </style>
 </head>
 <body>
 
-    <div class="menu-btn" onclick="toggleMenu()">
-        <div style="width: 25px; height: 2px; background: white; margin: 5px 0;"></div>
-        <div style="width: 25px; height: 2px; background: white; margin: 5px 0;"></div>
-        <div style="width: 25px; height: 2px; background: white; margin: 5px 0;"></div>
-    </div>
+    <div class="menu-btn" onclick="toggleMenu()">☰</div>
 
     <div class="sidebar" id="sidebar">
-        <h3 style="padding-left: 15px;">Ajustes IA</h3>
-        <a href="#">🌐 Conexión en tiempo real</a>
-        <a href="#">🧠 Memoria de contexto</a>
-        <a href="#">🎨 Temas visuales</a>
-        <a href="#" onclick="toggleMenu()" style="color: var(--secondary);">✖ Cerrar Menú</a>
+        <h3 style="margin-top:0">Configuración Pro</h3>
+        <p style="font-size: 0.8rem; color: #64748b;">Ajusta los parámetros de tu IA.</p>
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+        <div style="cursor:pointer; color: #ef4444;" onclick="location.reload()">Limpiar Memoria</div>
     </div>
 
     <div class="main-wrapper">
-        <div class="header">
-            <h1>NEURAL CORE AI</h1>
+        <div class="modes-container">
+            <button class="mode-btn active" id="btn-fast" onclick="setMode('fast')">⚡ Rápido</button>
+            <button class="mode-btn" id="btn-pro" onclick="setMode('pro')">🧠 Razonamiento Pro</button>
         </div>
 
         <div class="chat-box" id="chat-box">
-            <div class="msg ai">Conexión neuronal establecida. ¿Qué deseas investigar hoy?</div>
+            <div class="msg ai">Hola. Soy tu IA personalizada. ¿Qué nivel de análisis necesitas hoy?</div>
         </div>
 
-        <div class="input-container">
-            <input type="text" id="user-input" placeholder="Escribe tu comando..." onkeydown="if(event.key === 'Enter') sendMessage()">
-            <button onclick="sendMessage()">ENVIAR</button>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Pregúntame lo que sea..." onkeydown="if(event.key === 'Enter') sendMessage()">
+            <button class="send-btn" onclick="sendMessage()">ENVIAR</button>
         </div>
     </div>
 
     <script>
+        let currentMode = 'fast';
+
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + mode).classList.add('active');
         }
 
         function sendMessage() {
@@ -223,32 +209,42 @@
             const text = input.value.trim();
 
             if (text !== "") {
-                // Mensaje del Usuario
                 box.innerHTML += `<div class="msg user">${text}</div>`;
                 input.value = "";
                 box.scrollTop = box.scrollHeight;
 
-                // Lógica de Respuesta
+                // Simular pensamiento
+                const delay = currentMode === 'fast' ? 500 : 2500;
+                
                 setTimeout(() => {
-                    let response = "";
+                    let finalResponse = "";
+                    let thoughtHTML = "";
                     const lowerText = text.toLowerCase();
 
-                    if (lowerText === "hola") {
-                        response = "¡Hola! Es un gusto saludarte. Estoy lista para procesar cualquier solicitud que tengas para nuestro proyecto.";
-                    } 
-                    else if (lowerText.includes("quién te creó") || lowerText.includes("quien te creo")) {
-                        response = "Fui creado por ti. Soy el resultado de tu visión y desarrollo de inteligencia artificial personalizada.";
-                    } 
-                    else if (lowerText.includes("qué puedes hacer") || lowerText.includes("que puedes hacer")) {
-                        response = "Puedo procesar lenguaje natural, responder dudas sobre nuestro código y, próximamente, navegar la web en tiempo real para darte datos exactos.";
-                    } 
-                    else {
-                        response = "Mensaje recibido. Estoy analizando los datos para darte la respuesta más precisa.";
+                    // Lógica de pensamiento (Reasoning)
+                    if(currentMode === 'pro') {
+                        thoughtHTML = `<div class="thought-process">Analizando intención... Consultando base de datos interna... Verificando autoría...</div>`;
                     }
 
-                    box.innerHTML += `<div class="msg ai">${response}</div>`;
+                    // Respuestas solicitadas
+                    if (lowerText === "hola") {
+                        finalResponse = "¡Hola! Un placer saludarte de nuevo. ¿En qué puedo ayudarte en este momento?";
+                    } 
+                    else if (lowerText.includes("quién te creó") || lowerText.includes("quien te creo")) {
+                        finalResponse = "Tú me creaste. Soy tu asistente personal desarrollado para funcionar con datos en tiempo real.";
+                    }
+                    else {
+                        finalResponse = "He procesado tu mensaje en modo " + (currentMode === 'fast' ? "Rápido" : "Razonamiento Pro") + ". Estoy lista para seguir ejecutando tus órdenes.";
+                    }
+
+                    box.innerHTML += `
+                        <div class="msg ai">
+                            ${thoughtHTML}
+                            ${finalResponse}
+                        </div>`;
+                    
                     box.scrollTop = box.scrollHeight;
-                }, 700);
+                }, delay);
             }
         }
     </script>
