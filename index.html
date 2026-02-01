@@ -1,246 +1,64 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neural Core Pro - Platypus Edition</title>
+    <title>Mini Juego Express</title>
     <style>
-        :root {
-            --primary: #8b5cf6;
-            --secondary: #06b6d4;
-            --bg: #030712;
-            --glass: rgba(15, 23, 42, 0.8);
-            --border: rgba(255, 255, 255, 0.1);
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg);
-            /* --- FONDO CORREGIDO --- */
-            /* Capa 1: Ornitorrinco arriba derecha | Capa 2: Ornitorrinco abajo izquierda | Capa 3: Degradado */
-            background-image: 
-                url('https://www.pngplay.com/wp-content/uploads/12/Platypus-Background-PNG-Image.png'), 
-                url('https://www.pngplay.com/wp-content/uploads/12/Platypus-PNG-Free-File-Download.png'),
-                radial-gradient(circle at center, #1e1b4b 0%, #030712 100%);
-            background-position: top 5% right 5%, bottom 5% left 5%, center;
-            background-size: 300px auto, 350px auto, cover;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            /* ----------------------- */
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            overflow: hidden;
-        }
-
-        /* --- MENÚ LATERAL --- */
-        .menu-btn {
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            z-index: 100;
-            cursor: pointer;
-            background: var(--glass);
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            color: white;
-            font-size: 20px;
-        }
-
-        .sidebar {
-            position: fixed;
-            left: -280px;
-            top: 0;
-            width: 280px;
-            height: 100%;
-            background: rgba(3, 7, 18, 0.95);
-            backdrop-filter: blur(20px);
-            z-index: 99;
-            transition: 0.4s ease;
-            border-right: 1px solid var(--border);
-            padding: 80px 20px;
-        }
-
-        .sidebar.active { left: 0; }
-
-        /* --- CONTENEDOR PRINCIPAL --- */
-        .main-wrapper {
-            width: 90%;
-            max-width: 850px;
-            height: 80vh;
-            background: var(--glass);
-            border-radius: 24px;
-            border: 1px solid var(--border);
-            backdrop-filter: blur(15px);
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-            position: relative;
-        }
-
-        .modes-container {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            padding: 15px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .mode-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            color: #94a3b8;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .mode-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .chat-box {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .msg {
-            max-width: 80%;
-            padding: 14px 20px;
-            border-radius: 18px;
-            line-height: 1.5;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
-
-        .ai { background: rgba(255,255,255,0.05); border: 1px solid var(--border); align-self: flex-start; }
-        .user { background: var(--primary); align-self: flex-end; }
-
-        .thought {
-            font-size: 0.85rem;
-            color: var(--secondary);
-            margin-bottom: 8px;
-            display: block;
-            font-style: italic;
-        }
-
-        .input-area {
-            padding: 20px;
-            display: flex;
-            gap: 10px;
-            background: rgba(0,0,0,0.2);
-        }
-
-        input {
-            flex: 1;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            padding: 12px 20px;
-            border-radius: 12px;
-            color: white;
-            outline: none;
-        }
-
-        button.send-btn {
-            background: white;
-            color: black;
-            border: none;
-            padding: 0 25px;
-            border-radius: 12px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); }
+        body { text-align: center; background: #111; color: white; font-family: sans-serif; }
+        canvas { background: #222; border: 2px solid #8b5cf6; cursor: crosshair; margin-top: 20px; }
     </style>
 </head>
 <body>
-
-    <div class="menu-btn" onclick="toggleMenu()">☰</div>
-
-    <div class="sidebar" id="sidebar">
-        <h3 style="color:white">Configuración</h3>
-        <p style="color:#64748b">Neural Core v2.0</p>
-        <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
-        <div style="color: #94a3b8; cursor: pointer;" onclick="location.reload()">Reiniciar chat</div>
-    </div>
-
-    <div class="main-wrapper">
-        <div class="modes-container">
-            <button class="mode-btn active" id="btn-fast" onclick="setMode('fast')">⚡ Rápido</button>
-            <button class="mode-btn" id="btn-pro" onclick="setMode('pro')">🧠 Razonamiento</button>
-        </div>
-
-        <div class="chat-box" id="chat-box">
-            <div class="msg ai">Sistema iniciado. ¿En qué puedo ayudarte hoy?</div>
-        </div>
-
-        <div class="input-area">
-            <input type="text" id="user-input" placeholder="Escribe un mensaje..." onkeydown="if(event.key === 'Enter') sendMessage()">
-            <button class="send-btn" onclick="sendMessage()">ENVIAR</button>
-        </div>
-    </div>
+    <h1>Puntos: <span id="score">0</span></h1>
+    <p>¡Haz clic en el cuadro azul!</p>
+    <canvas id="gameCanvas" width="500" height="400"></canvas>
 
     <script>
-        let currentMode = 'fast';
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreElement = document.getElementById("score");
 
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('active');
+        let score = 0;
+        let target = { x: 200, y: 200, size: 40 };
+
+        // Función para dibujar el juego
+        function draw() {
+            // 1. Limpiar pantalla
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 2. Dibujar objetivo
+            ctx.fillStyle = "#06b6d4";
+            ctx.fillRect(target.x, target.y, target.size, target.size);
         }
 
-        function setMode(mode) {
-            currentMode = mode;
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-' + mode).classList.add('active');
+        // Función para mover el objetivo a una posición aleatoria
+        function moveTarget() {
+            target.x = Math.random() * (canvas.width - target.size);
+            target.y = Math.random() * (canvas.height - target.size);
         }
 
-        function sendMessage() {
-            const input = document.getElementById('user-input');
-            const box = document.getElementById('chat-box');
-            const text = input.value.trim();
+        // Detectar clics
+        canvas.addEventListener("mousedown", (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
 
-            if (text !== "") {
-                box.innerHTML += `<div class="msg user">${text}</div>`;
-                input.value = "";
-                box.scrollTop = box.scrollHeight;
-
-                const delay = currentMode === 'fast' ? 400 : 2000;
+            // Verificar si el clic fue dentro del cuadro
+            if (mouseX >= target.x && mouseX <= target.x + target.size &&
+                mouseY >= target.y && mouseY <= target.y + target.size) {
                 
-                setTimeout(() => {
-                    let response = "";
-                    let thought = "";
-                    const lower = text.toLowerCase();
-
-                    if(currentMode === 'pro') thought = `<span class="thought">Procesando con razonamiento profundo...</span>`;
-
-                    if (lower === "hola") {
-                        response = "¡Hola! Un saludo cordial para ti. ¿Qué vamos a desarrollar hoy?";
-                    } else if (lower.includes("quién te creó") || lower.includes("quien te creo")) {
-                        response = "Fui creado por ti. Soy tu Inteligencia Artificial personalizada.";
-                    } else {
-                        response = "He analizado tu mensaje. ¿Te gustaría que busquemos datos reales sobre esto?";
-                    }
-
-                    box.innerHTML += `<div class="msg ai">${thought}${response}</div>`;
-                    box.scrollTop = box.scrollHeight;
-                }, delay);
+                score++;
+                scoreElement.innerText = score;
+                moveTarget(); // Moverlo tras ganar punto
             }
+        });
+
+        // Bucle de animación (Game Loop)
+        function gameLoop() {
+            draw();
+            requestAnimationFrame(gameLoop);
         }
+
+        gameLoop(); // Iniciar juego
     </script>
 </body>
 </html>
