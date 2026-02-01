@@ -1,64 +1,125 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Mini Juego Express</title>
+    <meta charset="UTF-8">
+    <title>Snake Neon Edition</title>
     <style>
-        body { text-align: center; background: #111; color: white; font-family: sans-serif; }
-        canvas { background: #222; border: 2px solid #8b5cf6; cursor: crosshair; margin-top: 20px; }
+        body {
+            background-color: #030712;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        canvas {
+            border: 5px solid #8b5cf6;
+            box-shadow: 0 0 20px #8b5cf6;
+            background-color: #000;
+        }
+        h1 { margin: 10px; color: #06b6d4; text-shadow: 0 0 10px #06b6d4; }
+        .score { font-size: 24px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
-    <h1>Puntos: <span id="score">0</span></h1>
-    <p>¡Haz clic en el cuadro azul!</p>
-    <canvas id="gameCanvas" width="500" height="400"></canvas>
+
+    <h1>SNAKE PRO</h1>
+    <div class="score">Puntos: <span id="scoreVal">0</span></div>
+    <canvas id="snakeGame" width="400" height="400"></canvas>
+    <p>Usa las flechas del teclado para moverte</p>
 
     <script>
-        const canvas = document.getElementById("gameCanvas");
+        const canvas = document.getElementById("snakeGame");
         const ctx = canvas.getContext("2d");
-        const scoreElement = document.getElementById("score");
+        const scoreElement = document.getElementById("scoreVal");
 
+        const box = 20; // Tamaño de cada cuadro
         let score = 0;
-        let target = { x: 200, y: 200, size: 40 };
+        let gameSpeed = 100;
 
-        // Función para dibujar el juego
-        function draw() {
-            // 1. Limpiar pantalla
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // La serpiente es un array de objetos
+        let snake = [{ x: 10 * box, y: 10 * box }];
+        
+        // Comida
+        let food = {
+            x: Math.floor(Math.random() * 19 + 1) * box,
+            y: Math.floor(Math.random() * 19 + 1) * box
+        };
 
-            // 2. Dibujar objetivo
-            ctx.fillStyle = "#06b6d4";
-            ctx.fillRect(target.x, target.y, target.size, target.size);
+        let d; // Dirección
+
+        document.addEventListener("keydown", direction);
+
+        function direction(event) {
+            if(event.keyCode == 37 && d != "RIGHT") d = "LEFT";
+            else if(event.keyCode == 38 && d != "DOWN") d = "UP";
+            else if(event.keyCode == 39 && d != "LEFT") d = "RIGHT";
+            else if(event.keyCode == 40 && d != "UP") d = "DOWN";
         }
 
-        // Función para mover el objetivo a una posición aleatoria
-        function moveTarget() {
-            target.x = Math.random() * (canvas.width - target.size);
-            target.y = Math.random() * (canvas.height - target.size);
-        }
-
-        // Detectar clics
-        canvas.addEventListener("mousedown", (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
-            // Verificar si el clic fue dentro del cuadro
-            if (mouseX >= target.x && mouseX <= target.x + target.size &&
-                mouseY >= target.y && mouseY <= target.y + target.size) {
-                
-                score++;
-                scoreElement.innerText = score;
-                moveTarget(); // Moverlo tras ganar punto
+        function collision(head, array) {
+            for(let i = 0; i < array.length; i++) {
+                if(head.x == array[i].x && head.y == array[i].y) return true;
             }
-        });
-
-        // Bucle de animación (Game Loop)
-        function gameLoop() {
-            draw();
-            requestAnimationFrame(gameLoop);
+            return false;
         }
 
-        gameLoop(); // Iniciar juego
+        function draw() {
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Dibujar serpiente
+            for(let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = (i == 0) ? "#8b5cf6" : "#a78bfa";
+                ctx.strokeStyle = "#030712";
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+                ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+            }
+
+            // Dibujar comida
+            ctx.fillStyle = "#06b6d4";
+            ctx.beginPath();
+            ctx.arc(food.x + box/2, food.y + box/2, box/2, 0, Math.PI*2);
+            ctx.fill();
+
+            // Posición vieja de la cabeza
+            let snakeX = snake[0].x;
+            let snakeY = snake[0].y;
+
+            // Mover cabeza
+            if( d == "LEFT") snakeX -= box;
+            if( d == "UP") snakeY -= box;
+            if( d == "RIGHT") snakeX += box;
+            if( d == "DOWN") snakeY += box;
+
+            // Si la serpiente come
+            if(snakeX == food.x && snakeY == food.y) {
+                score++;
+                scoreElement.innerHTML = score;
+                food = {
+                    x: Math.floor(Math.random() * 19 + 1) * box,
+                    y: Math.floor(Math.random() * 19 + 1) * box
+                };
+            } else {
+                snake.pop(); // Quitar cola
+            }
+
+            let newHead = { x: snakeX, y: snakeY };
+
+            // Reglas de perder
+            if(snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
+                clearInterval(game);
+                alert("GAME OVER. Puntos: " + score);
+                location.reload(); // Reiniciar
+            }
+
+            snake.unshift(newHead); // Añadir nueva cabeza
+        }
+
+        let game = setInterval(draw, gameSpeed);
     </script>
 </body>
 </html>
