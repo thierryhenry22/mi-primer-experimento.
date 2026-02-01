@@ -1,2 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi IA Personal - Dashboard</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg-dark: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+        }
 
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            color: white;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
+        /* Contenedor principal estilo cristal */
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            padding: 20px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Burbujas de chat */
+        .bubble {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 15px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .ai { background: var(--primary); align-self: flex-start; }
+        .user { background: rgba(255, 255, 255, 0.1); align-self: flex-end; }
+
+        .input-area {
+            padding: 20px;
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 20px;
+            border-radius: 12px;
+            color: white;
+            outline: none;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover { transform: scale(1.05); background: #4f46e5; }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="header">
+        <h2 style="margin:0; font-weight: 300;">Mi IA <span style="font-weight: 800; color: #818cf8;">Core</span></h2>
+    </div>
+    
+    <div class="messages" id="chat-box">
+        <div class="bubble ai">¡Hola! Estoy lista. ¿En qué vamos a trabajar hoy?</div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="Escribe tu mensaje aquí...">
+        <button onclick="sendMessage()">Enviar</button>
+    </div>
+</div>
+
+<script>
+    function sendMessage() {
+        const input = document.getElementById('user-input');
+        const box = document.getElementById('chat-box');
+        
+        if(input.value.trim() !== "") {
+            // Mensaje del usuario
+            box.innerHTML += `<div class="bubble user">${input.value}</div>`;
+            input.value = "";
+            box.scrollTop = box.scrollHeight;
+        }
+    }
+</script>
+
+</body>
+</html>
