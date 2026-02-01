@@ -2,24 +2,18 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Voxel Engine Pro - Infinite World</title>
+    <title>Voxel World Elite - Life Update</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; }
-        #crosshair {
-            position: absolute; top: 50%; left: 50%;
-            width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.5);
-            transform: translate(-50%, -50%); border-radius: 50%;
-        }
-        #stats {
+        body { margin: 0; overflow: hidden; background-color: #87CEEB; }
+        #gui {
             position: absolute; top: 10px; left: 10px;
-            background: rgba(0,0,0,0.7); color: #00e6ff;
-            padding: 10px; border: 1px solid #00e6ff; font-size: 12px;
+            background: rgba(0,0,0,0.8); color: #fff;
+            padding: 10px; font-family: sans-serif; border-left: 5px solid #00ff00;
         }
     </style>
 </head>
 <body>
-    <div id="stats">ENGINE: PRO-VOXEL V4 | MUNDO: INFINITO | FPS: <span id="fps">--</span></div>
-    <div id="crosshair"></div>
+    <div id="gui"><b>MOVIMIENTO:</b> WASD | <b>VELOCIDAD:</b> MÁXIMA | <b>SALTO:</b> POTENCIADO</div>
 
     <script type="importmap">
         {
@@ -34,145 +28,141 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-        // --- NÚCLEO DEL MOTOR ---
+        // --- CORE ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87CEEB);
-        scene.fog = new THREE.FogExp2(0x87CEEB, 0.015);
-
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
         const controls = new PointerLockControls(camera, document.body);
         document.body.addEventListener('click', () => controls.lock());
 
-        // --- SISTEMA DE TERRENO INFINITO ---
-        const CHUNK_SIZE = 16;
-        const VIEW_DISTANCE = 4; // Chunks a la redonda
-        const chunks = new Map();
-        const blockGeometry = new THREE.BoxGeometry(1, 1, 1);
-        
-        // Materiales con iluminación avanzada
-        const materials = {
-            grass: new THREE.MeshStandardMaterial({ color: 0x567d46, roughness: 0.8 }),
-            dirt: new THREE.MeshStandardMaterial({ color: 0x8b4513, roughness: 0.9 })
-        };
+        // --- RECURSOS ---
+        const geoBlock = new THREE.BoxGeometry(0.98, 0.98, 0.98); // Separación sutil
+        const matGrass = new THREE.MeshStandardMaterial({ color: 0x4d8c3a });
+        const matLog = new THREE.MeshStandardMaterial({ color: 0x5d4037 });
+        const matLeaves = new THREE.MeshStandardMaterial({ color: 0x2e7d32 });
+        const matFlower = new THREE.MeshStandardMaterial({ color: 0xff4081 });
 
-        function getTerrainHeight(x, z) {
-            // Algoritmo de ruido de múltiples octavas para realismo profesional
-            let h = Math.sin(x * 0.05) * Math.cos(z * 0.05) * 8;
-            h += Math.sin(x * 0.1) * 3;
-            h += Math.sin(x * 0.01) * 15; // Grandes elevaciones
-            return Math.floor(h + 20);
+        const chunks = new Map();
+        const CHUNK_SIZE = 16;
+        const VIEW_DISTANCE = 3;
+
+        // --- GENERADOR DE MUNDO DINÁMICO ---
+        function getH(x, z) {
+            return Math.floor(Math.sin(x * 0.1) * 2 + Math.cos(z * 0.1) * 2 + 5);
+        }
+
+        function createTree(x, y, z) {
+            const tree = new THREE.Group();
+            // Tronco
+            for(let i=0; i<4; i++) {
+                const log = new THREE.Mesh(geoBlock, matLog);
+                log.position.set(x, y + i, z);
+                tree.add(log);
+            }
+            // Hojas
+            for(let ox=-1; ox<=1; ox++) {
+                for(let oz=-1; oz<=1; oz++) {
+                    for(let oy=0; oy<2; oy++) {
+                        const leaf = new THREE.Mesh(geoBlock, matLeaves);
+                        leaf.position.set(x + ox, y + 4 + oy, z + oz);
+                        tree.add(leaf);
+                    }
+                }
+            }
+            scene.add(tree);
         }
 
         function createChunk(cx, cz) {
-            const chunkKey = `${cx},${cz}`;
-            if (chunks.has(chunkKey)) return;
-
-            const mesh = new THREE.InstancedMesh(blockGeometry, materials.grass, CHUNK_SIZE * CHUNK_SIZE);
+            const key = `${cx},${cz}`;
+            if(chunks.has(key)) return;
+            
+            const mesh = new THREE.InstancedMesh(geoBlock, matGrass, CHUNK_SIZE * CHUNK_SIZE);
             const dummy = new THREE.Object3D();
-            let i = 0;
+            let idx = 0;
 
-            for (let x = 0; x < CHUNK_SIZE; x++) {
-                for (let z = 0; z < CHUNK_SIZE; z++) {
+            for(let x=0; x<CHUNK_SIZE; x++) {
+                for(let z=0; z<CHUNK_SIZE; z++) {
                     const wx = cx * CHUNK_SIZE + x;
                     const wz = cz * CHUNK_SIZE + z;
-                    const wy = getTerrainHeight(wx, wz);
+                    const wy = getH(wx, wz);
                     
                     dummy.position.set(wx, wy, wz);
                     dummy.updateMatrix();
-                    mesh.setMatrixAt(i++, dummy.matrix);
+                    mesh.setMatrixAt(idx++, dummy.matrix);
+
+                    // Probabilidad de Árboles (1%)
+                    if(Math.random() < 0.015) createTree(wx, wy + 1, wz);
+                    
+                    // Flores
+                    if(Math.random() < 0.05) {
+                        const flower = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), matFlower);
+                        flower.position.set(wx, wy + 0.8, wz);
+                        scene.add(flower);
+                    }
                 }
             }
-            mesh.receiveShadow = true;
-            mesh.castShadow = true;
             scene.add(mesh);
-            chunks.set(chunkKey, mesh);
+            chunks.set(key, mesh);
         }
 
-        function updateChunks() {
-            const playerCX = Math.floor(camera.position.x / CHUNK_SIZE);
-            const playerCZ = Math.floor(camera.position.z / CHUNK_SIZE);
-
-            for (let x = -VIEW_DISTANCE; x <= VIEW_DISTANCE; x++) {
-                for (let z = -VIEW_DISTANCE; z <= VIEW_DISTANCE; z++) {
-                    createChunk(playerCX + x, playerCZ + z);
-                }
-            }
-        }
-
-        // --- ILUMINACIÓN DINÁMICA ---
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        scene.add(ambientLight);
-
-        const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-        sun.position.set(50, 100, 50);
-        sun.castShadow = true;
-        scene.add(sun);
-
-        // --- FÍSICA Y MOVIMIENTO PROFESIONAL ---
+        // --- FÍSICA Y CONTROL ---
         let velocity = new THREE.Vector3();
-        const move = { fwd: false, bck: false, lft: false, rgt: false };
+        let move = { f: false, b: false, l: false, r: false };
         let canJump = false;
 
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'KeyW') move.fwd = true;
-            if (e.code === 'KeyS') move.bck = true;
-            if (e.code === 'KeyA') move.lft = true;
-            if (e.code === 'KeyD') move.rgt = true;
-            if (e.code === 'Space' && canJump) {
-                velocity.y = 0.18; // Salto calibrado profesionalmente
-                canJump = false;
-            }
+        window.addEventListener('keydown', (e) => {
+            if(e.code === 'KeyW') move.f = true;
+            if(e.code === 'KeyS') move.b = true;
+            if(e.code === 'KeyA') move.l = true;
+            if(e.code === 'KeyD') move.r = true;
+            if(e.code === 'Space' && canJump) { velocity.y = 0.22; canJump = false; }
         });
-        document.addEventListener('keyup', (e) => {
-            if (e.code === 'KeyW') move.fwd = false;
-            if (e.code === 'KeyS') move.bck = false;
-            if (e.code === 'KeyA') move.lft = false;
-            if (e.code === 'KeyD') move.rgt = false;
+        window.addEventListener('keyup', (e) => {
+            if(e.code === 'KeyW') move.f = false;
+            if(e.code === 'KeyS') move.b = false;
+            if(e.code === 'KeyA') move.l = false;
+            if(e.code === 'KeyD') move.r = false;
         });
 
-        camera.position.set(0, 40, 0);
+        const sun = new THREE.DirectionalLight(0xffffff, 1);
+        sun.position.set(10, 20, 10);
+        scene.add(sun, new THREE.AmbientLight(0xffffff, 0.5));
+
+        camera.position.set(0, 10, 0);
 
         function animate() {
             requestAnimationFrame(animate);
-            const time = performance.now();
+            if(controls.isLocked) {
+                const speed = 0.15; // VELOCIDAD AUMENTADA
+                if(move.f) controls.moveForward(speed);
+                if(move.b) controls.moveForward(-speed);
+                if(move.l) controls.moveRight(-speed);
+                if(move.r) controls.moveRight(speed);
 
-            if (controls.isLocked) {
-                // Física de rozamiento
-                velocity.x *= 0.9;
-                velocity.z *= 0.9;
-                velocity.y -= 0.008; // Gravedad
-
-                const speed = 0.01;
-                if (move.fwd) controls.moveForward(speed);
-                if (move.bck) controls.moveForward(-speed);
-                if (move.lft) controls.moveRight(-speed);
-                if (move.rgt) controls.moveRight(speed);
-
+                velocity.y -= 0.01; // Gravedad
                 camera.position.y += velocity.y;
 
-                // COLISIÓN CON TERRENO INFINITO
-                const groundY = getTerrainHeight(Math.round(camera.position.x), Math.round(camera.position.z));
-                const playerHeight = 1.8;
-
-                if (camera.position.y < groundY + playerHeight) {
-                    camera.position.y = groundY + playerHeight;
+                const gy = getH(Math.round(camera.position.x), Math.round(camera.position.z));
+                if(camera.position.y < gy + 1.8) {
+                    camera.position.y = gy + 1.8;
                     velocity.y = 0;
                     canJump = true;
                 }
 
-                updateChunks();
+                const pcx = Math.floor(camera.position.x / CHUNK_SIZE);
+                const pcz = Math.floor(camera.position.z / CHUNK_SIZE);
+                for(let x=-VIEW_DISTANCE; x<=VIEW_DISTANCE; x++) {
+                    for(let z=-VIEW_DISTANCE; z<=VIEW_DISTANCE; z++) {
+                        createChunk(pcx + x, pcz + z);
+                    }
+                }
             }
-
             renderer.render(scene, camera);
-            document.getElementById('fps').innerText = Math.round(1000 / (performance.now() - time));
         }
-
         animate();
     </script>
 </body>
