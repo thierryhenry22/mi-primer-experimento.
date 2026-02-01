@@ -2,25 +2,35 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>HENRY CRAFT: NEXT GEN</title>
+    <title>HENRY CRAFT: THE ENTITY</title>
     <style>
-        body { margin: 0; background: #000; overflow: hidden; }
-        #overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            background: url('https://grainy-gradients.vercel.app/noise.svg'); /* Ruido cinematográfico */
-            opacity: 0.05;
+        body { margin: 0; background: #000; overflow: hidden; cursor: crosshair; }
+        #hud-vitals {
+            position: absolute; top: 20px; left: 20px;
+            color: #0f0; font-family: 'Courier New', monospace; font-size: 14px;
+            text-shadow: 0 0 5px #0f0; z-index: 10;
         }
-        #hud {
-            position: absolute; bottom: 30px; left: 30px;
-            color: #fff; font-family: 'monospace'; font-size: 12px;
-            text-transform: uppercase; letter-spacing: 2px;
+        #interaction-prompt {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: white; font-family: sans-serif; font-size: 18px;
+            display: none; text-transform: uppercase; letter-spacing: 2px;
+        }
+        /* Efecto de estática de TV antigua */
+        #noise {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://media.giphy.com/media/oEI9uWUic9ZqU/giphy.gif');
+            opacity: 0.03; pointer-events: none; z-index: 5;
         }
     </style>
 </head>
 <body>
-    <div id="overlay"></div>
-    <div id="hud">REC [●] 00:00:24:12 <br> LOCATION: BRAINROT_SECTOR_01</div>
+    <div id="noise"></div>
+    <div id="hud-vitals">
+        ID: HENRY_PROT_01<br>
+        PULSE: <span id="pulse">72</span> BPM<br>
+        STATUS: SEARCHING...
+    </div>
+    <div id="interaction-prompt">[E] RECOGER BRAINROT</div>
 
     <script type="importmap">
         {
@@ -36,96 +46,106 @@
         import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
-        // 1. MOTOR Y ESCENA (Capa Profesional)
+        // --- MOTOR CORE ---
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x000000, 0.1);
-        
-        const camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.01, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        scene.fog = new THREE.FogExp2(0x000000, 0.15);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.toneMapping = THREE.ACESFilmicToneMapping; // Tone mapping de cine
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
         document.body.appendChild(renderer.domElement);
 
-        // 2. RECURSOS DE ARTE (Materiales PBR)
-        // Usamos materiales que reaccionan a la luz con texturas (Assets listos)
-        const textureLoader = new THREE.TextureLoader();
-        const floorTex = textureLoader.load('https://threejs.org/examples/textures/terrain/grasslight-big.jpg');
-        floorTex.repeat.set(50, 50); floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping;
-
-        const matPro = new THREE.MeshStandardMaterial({ 
-            map: floorTex, 
-            roughness: 0.8, 
-            metalness: 0.2 
+        // --- ASSETS Y RECURSOS ---
+        const texLoader = new THREE.TextureLoader();
+        // Cargamos una textura de suelo más realista (concreto/suciedad)
+        const floorMat = new THREE.MeshStandardMaterial({ 
+            color: 0x222222, 
+            roughness: 0.9,
+            metalness: 0.1
         });
-
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), matPro);
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), floorMat);
         floor.rotation.x = -Math.PI / 2;
         scene.add(floor);
 
-        // 3. ILUMINACIÓN DINÁMICA
-        const spotlight = new THREE.SpotLight(0xffffff, 100);
-        spotlight.angle = 0.4;
-        spotlight.penumbra = 0.3;
-        spotlight.castShadow = true;
-        camera.add(spotlight); // La luz es la linterna del jugador
-        spotlight.position.set(0, 0, 1);
-        spotlight.target.position.set(0, 0, -5);
-        camera.add(spotlight.target);
+        // --- ENTIDADES (BRAINROT BILLBOARDS) ---
+        // Esto crea imágenes que siempre te miran, muy usado en juegos de horror indie
+        function createEntity(url, x, z) {
+            const map = texLoader.load(url);
+            const spriteMat = new THREE.SpriteMaterial({ map: map, fog: true });
+            const sprite = new THREE.Sprite(spriteMat);
+            sprite.scale.set(3, 3, 1);
+            sprite.position.set(x, 1.5, z);
+            scene.add(sprite);
+            return sprite;
+        }
+
+        // Aparecemos a "Skibidi" o cualquier meme en la lejanía
+        const entity1 = createEntity('https://i.imgur.com/1B9q90x.png', 10, -15);
+        const entity2 = createEntity('https://i.imgur.com/w2Y7JbX.png', -12, -25);
+
+        // --- LINTERNA AVANZADA ---
+        const flashlight = new THREE.SpotLight(0xfff9d4, 50, 40, 0.4, 0.5, 1);
+        flashlight.castShadow = true;
+        camera.add(flashlight);
+        flashlight.position.set(0, 0, 0.5);
+        flashlight.target.position.set(0, 0, -5);
+        camera.add(flashlight.target);
         scene.add(camera);
 
-        // 4. POST-PROCESADO (Estilo Bodycam/Unreal)
-        const composer = new EffectComposer(renderer);
-        composer.addPass(new RenderPass(scene, camera));
-
-        // Shader de distorsión de lente (Fisheye)
-        const FisheyeShader = {
-            uniforms: { "tDiffuse": { value: null }, "strength": { value: 0.02 } },
-            vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-            fragmentShader: `
-                uniform sampler2D tDiffuse;
-                uniform float strength;
-                varying vec2 vUv;
-                void main() {
-                    vec2 uv = vUv - 0.5;
-                    float d = length(uv);
-                    uv *= 1.0 + d * d * strength;
-                    gl_FragColor = texture2D(tDiffuse, uv + 0.5);
-                }
-            `
-        };
-        const fishEye = new ShaderPass(FisheyeShader);
-        composer.addPass(fishEye);
-
-        // 5. MECÁNICAS (JavaScript avanzado)
+        // --- LÓGICA DE MOVIMIENTO Y PULSO ---
         let move = { f: 0, s: 0 };
+        let bpm = 72;
         window.onkeydown = (e) => {
-            if(e.code === 'KeyW') move.f = 0.1;
-            if(e.code === 'KeyS') move.f = -0.1;
-            if(e.code === 'KeyA') move.s = -0.1;
-            if(e.code === 'KeyD') move.s = 0.1;
+            if(e.code === 'KeyW') move.f = 0.12;
+            if(e.code === 'KeyS') move.f = -0.08;
+            if(e.code === 'KeyA') move.s = -0.08;
+            if(e.code === 'KeyD') move.s = 0.08;
         };
         window.onkeyup = (e) => {
             if(['KeyW', 'KeyS'].includes(e.code)) move.f = 0;
             if(['KeyA', 'KeyD'].includes(e.code)) move.s = 0;
         };
 
+        // --- BUCLE DE ANIMACIÓN ---
         function animate() {
             requestAnimationFrame(animate);
             
-            // Movimiento suave con inercia
+            // Movimiento con inercia
             camera.translateZ(-move.f);
             camera.translateX(move.s);
-            
-            // Simular balanceo de cabeza (Head Bob)
-            if(move.f !== 0 || move.s !== 0) {
-                camera.position.y = 1.6 + Math.sin(Date.now() * 0.01) * 0.05;
+
+            // Efecto de pulso cardíaco reactivo
+            if (move.f !== 0 || move.s !== 0) {
+                bpm = Math.min(160, bpm + 0.2);
+                camera.position.y = 1.6 + Math.sin(Date.now() * 0.01) * 0.04; // Head bob
+            } else {
+                bpm = Math.max(72, bpm - 0.1);
+            }
+            document.getElementById('pulse').innerText = Math.round(bpm);
+
+            // Hacer que la linterna tiemble un poco si el pulso es alto (Realismo)
+            if(bpm > 100) {
+                flashlight.position.x = Math.random() * 0.02;
+                flashlight.position.y = Math.random() * 0.02;
             }
 
-            composer.render();
+            // Distancia a entidades para asustar
+            const dist = camera.position.distanceTo(entity1.position);
+            if(dist < 5) {
+                // Aquí podríamos disparar un Jumpscare profesional
+            }
+
+            renderer.render(scene, camera);
         }
         animate();
+
+        // Ajuste de pantalla
+        window.onresize = () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        };
     </script>
 </body>
 </html>
