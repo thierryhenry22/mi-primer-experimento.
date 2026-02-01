@@ -3,173 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi IA Personal - Dashboard</title>
+    <title>IA Core - Elite Interface</title>
     <style>
         :root {
-            --primary: #6366f1;
-            --bg-dark: #0f172a;
-            --glass: rgba(255, 255, 255, 0.05);
-            --accent: #818cf8;
+            --primary: #8b5cf6;
+            --secondary: #06b6d4;
+            --bg: #030712;
+            --glass: rgba(15, 23, 42, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
         }
+
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
-            color: white;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.15) 0px, transparent 50%);
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            color: white;
+            overflow: hidden;
         }
 
-        /* Interfaz de cristal (Glassmorphism) */
-        .chat-container {
-            width: 95%;
-            max-width: 850px;
-            height: 80vh;
+        /* --- MENÚ HAMBURGUESA --- */
+        .menu-btn {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            z-index: 100;
+            cursor: pointer;
             background: var(--glass);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 28px;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            transition: 0.3s;
+        }
+
+        .menu-btn:hover { background: rgba(255,255,255,0.1); }
+
+        .sidebar {
+            position: fixed;
+            left: -280px;
+            top: 0;
+            width: 280px;
+            height: 100%;
+            background: rgba(3, 7, 18, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 99;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-right: 1px solid var(--border);
+            padding: 80px 20px;
+        }
+
+        .sidebar.active { left: 0; }
+
+        .sidebar a {
+            display: block;
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover { background: var(--glass); color: white; }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .main-wrapper {
+            width: 95%;
+            max-width: 1000px;
+            height: 85vh;
+            position: relative;
+            background: var(--glass);
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(20px);
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
         }
 
         .header {
-            padding: 20px;
+            padding: 25px;
             text-align: center;
-            background: rgba(255, 255, 255, 0.03);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--border);
         }
 
-        .messages {
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            background: linear-gradient(to right, #a78bfa, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .chat-box {
             flex: 1;
-            padding: 25px;
+            padding: 30px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
         }
 
-        .bubble {
-            max-width: 75%;
-            padding: 14px 20px;
-            border-radius: 20px;
+        /* --- BURBUJAS --- */
+        .msg {
+            max-width: 80%;
+            padding: 16px 24px;
+            border-radius: 22px;
             font-size: 1rem;
-            line-height: 1.5;
-            animation: fadeIn 0.3s ease;
+            line-height: 1.6;
+            animation: slideUp 0.4s ease-out;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .ai { 
-            background: rgba(99, 102, 241, 0.2); 
-            border: 1px solid var(--primary);
-            align-self: flex-start; 
+        .ai {
+            align-self: flex-start;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(139, 92, 246, 0.3);
             border-bottom-left-radius: 4px;
         }
 
-        .user { 
-            background: rgba(255, 255, 255, 0.1); 
-            align-self: flex-end; 
+        .user {
+            align-self: flex-end;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
             border-bottom-right-radius: 4px;
         }
 
-        .input-area {
-            padding: 20px;
+        /* --- INPUT AREA --- */
+        .input-container {
+            padding: 30px;
+            background: rgba(0,0,0,0.2);
             display: flex;
-            gap: 12px;
-            background: rgba(0, 0, 0, 0.3);
+            gap: 15px;
         }
 
         input {
             flex: 1;
-            background: rgba(255, 255, 255, 0.07);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 14px 22px;
-            border-radius: 15px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            padding: 16px 25px;
+            border-radius: 18px;
             color: white;
             outline: none;
-        }
-
-        button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 0 25px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-weight: bold;
             transition: 0.3s;
         }
 
-        button:hover { background: var(--accent); transform: scale(1.02); }
+        input:focus { border-color: var(--primary); background: rgba(255,255,255,0.06); }
+
+        button {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            padding: 0 30px;
+            border-radius: 18px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3); }
+
+        /* Scrollbar Personalizada */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="chat-container">
-    <div class="header">
-        <h2 style="margin:0; font-weight: 300;">MI IA <span style="font-weight: 800; color: var(--accent);">PRO</span></h2>
-    </div>
-    
-    <div class="messages" id="chat-box">
-        <div class="bubble ai">Sistema cargado. Estoy lista para asistirte.</div>
+    <div class="menu-btn" onclick="toggleMenu()">
+        <div style="width: 25px; height: 2px; background: white; margin: 5px 0;"></div>
+        <div style="width: 25px; height: 2px; background: white; margin: 5px 0;"></div>
+        <div style="width: 25px; height: 2px; background: white; margin: 5px 0;"></div>
     </div>
 
-    <div class="input-area">
-        <input type="text" id="user-input" placeholder="Escribe tu mensaje..." onkeydown="if(event.key === 'Enter') sendMessage()">
-        <button onclick="sendMessage()">Enviar</button>
+    <div class="sidebar" id="sidebar">
+        <h3 style="padding-left: 15px;">Ajustes IA</h3>
+        <a href="#">🌐 Conexión en tiempo real</a>
+        <a href="#">🧠 Memoria de contexto</a>
+        <a href="#">🎨 Temas visuales</a>
+        <a href="#" onclick="toggleMenu()" style="color: var(--secondary);">✖ Cerrar Menú</a>
     </div>
-</div>
 
-<script>
-    function sendMessage() {
-        const input = document.getElementById('user-input');
-        const box = document.getElementById('chat-box');
-        const text = input.value.trim();
-        
-        if(text !== "") {
-            // Mostrar mensaje del usuario
-            box.innerHTML += `<div class="bubble user">${text}</div>`;
-            input.value = "";
-            box.scrollTop = box.scrollHeight;
+    <div class="main-wrapper">
+        <div class="header">
+            <h1>NEURAL CORE AI</h1>
+        </div>
 
-            // Procesar respuesta
-            setTimeout(() => {
-                let response = "";
-                const lowerText = text.toLowerCase();
+        <div class="chat-box" id="chat-box">
+            <div class="msg ai">Conexión neuronal establecida. ¿Qué deseas investigar hoy?</div>
+        </div>
 
-                // 1. Saludo cordial
-                if (lowerText === "hola" || lowerText === "buenos dias" || lowerText === "buenas tardes") {
-                    response = "¡Hola! Es un placer saludarte. ¿En qué puedo apoyarte con nuestro proyecto hoy?";
-                } 
-                // 2. Respuesta de Autoría
-                else if (lowerText.includes("quién te creó") || lowerText.includes("quien te creo")) {
-                    response = "Tú eres mi creador. He sido desarrollada bajo tu código y visión para ser una inteligencia artificial avanzada.";
-                }
-                // 3. Respuesta básica adicional (¿Qué puedes hacer?)
-                else if (lowerText.includes("qué puedes hacer") || lowerText.includes("que puedes hacer")) {
-                    response = "Puedo ayudarte a programar, analizar datos y buscar información en tiempo real para que nuestra IA sea tan potente como Gemini.";
-                }
-                // 4. Respuesta por defecto
-                else {
-                    response = "Entendido. Estoy procesando tu solicitud para darte los mejores datos posibles.";
-                }
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Escribe tu comando..." onkeydown="if(event.key === 'Enter') sendMessage()">
+            <button onclick="sendMessage()">ENVIAR</button>
+        </div>
+    </div>
 
-                box.innerHTML += `<div class="bubble ai">${response}</div>`;
-                box.scrollTop = box.scrollHeight;
-            }, 600);
+    <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
         }
-    }
-</script>
 
+        function sendMessage() {
+            const input = document.getElementById('user-input');
+            const box = document.getElementById('chat-box');
+            const text = input.value.trim();
+
+            if (text !== "") {
+                // Mensaje del Usuario
+                box.innerHTML += `<div class="msg user">${text}</div>`;
+                input.value = "";
+                box.scrollTop = box.scrollHeight;
+
+                // Lógica de Respuesta
+                setTimeout(() => {
+                    let response = "";
+                    const lowerText = text.toLowerCase();
+
+                    if (lowerText === "hola") {
+                        response = "¡Hola! Es un gusto saludarte. Estoy lista para procesar cualquier solicitud que tengas para nuestro proyecto.";
+                    } 
+                    else if (lowerText.includes("quién te creó") || lowerText.includes("quien te creo")) {
+                        response = "Fui creado por ti. Soy el resultado de tu visión y desarrollo de inteligencia artificial personalizada.";
+                    } 
+                    else if (lowerText.includes("qué puedes hacer") || lowerText.includes("que puedes hacer")) {
+                        response = "Puedo procesar lenguaje natural, responder dudas sobre nuestro código y, próximamente, navegar la web en tiempo real para darte datos exactos.";
+                    } 
+                    else {
+                        response = "Mensaje recibido. Estoy analizando los datos para darte la respuesta más precisa.";
+                    }
+
+                    box.innerHTML += `<div class="msg ai">${response}</div>`;
+                    box.scrollTop = box.scrollHeight;
+                }, 700);
+            }
+        }
+    </script>
 </body>
 </html>
