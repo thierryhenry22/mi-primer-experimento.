@@ -2,124 +2,139 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Snake Neon Edition</title>
+    <title>IA 3D Runner - Proto</title>
     <style>
-        body {
-            background-color: #030712;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
+        #ui {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            color: #06b6d4;
+            font-size: 24px;
+            text-shadow: 0 0 10px #06b6d4;
+            pointer-events: none;
+        }
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
             color: white;
-            font-family: 'Segoe UI', sans-serif;
+            opacity: 0.6;
         }
-        canvas {
-            border: 5px solid #8b5cf6;
-            box-shadow: 0 0 20px #8b5cf6;
-            background-color: #000;
-        }
-        h1 { margin: 10px; color: #06b6d4; text-shadow: 0 0 10px #06b6d4; }
-        .score { font-size: 24px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <h1>SNAKE PRO</h1>
-    <div class="score">Puntos: <span id="scoreVal">0</span></div>
-    <canvas id="snakeGame" width="400" height="400"></canvas>
-    <p>Usa las flechas del teclado para moverte</p>
+    <div id="ui">Puntos: <span id="score">0</span></div>
+    <div id="instructions">Usa las Flechas Izquierda/Derecha para esquivar</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        const canvas = document.getElementById("snakeGame");
-        const ctx = canvas.getContext("2d");
-        const scoreElement = document.getElementById("scoreVal");
+        // 1. Configuración de la Escena
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-        const box = 20; // Tamaño de cada cuadro
+        // 2. Iluminación
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(0, 5, 5).setLength(10);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
+
+        // 3. El Jugador (Cubo Neon)
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshPhongMaterial({ color: 0x8b5cf6, emissive: 0x2e1065 });
+        const player = new THREE.Mesh(geometry, material);
+        scene.add(player);
+
+        // 4. El Suelo (Pista)
+        const planeGeo = new THREE.PlaneGeometry(10, 1000);
+        const planeMat = new THREE.MeshPhongMaterial({ color: 0x0f172a });
+        const road = new THREE.Mesh(planeGeo, planeMat);
+        road.rotation.x = -Math.PI / 2;
+        road.position.z = -490;
+        scene.add(road);
+
+        camera.position.z = 5;
+        camera.position.y = 2;
+
+        // 5. Obstáculos
+        let obstacles = [];
+        function createObstacle() {
+            const obsGeo = new THREE.BoxGeometry(1, 1, 1);
+            const obsMat = new THREE.MeshPhongMaterial({ color: 0x06b6d4 });
+            const obs = new THREE.Mesh(obsGeo, obsMat);
+            obs.position.z = -50;
+            obs.position.x = (Math.random() - 0.5) * 8;
+            scene.add(obs);
+            obstacles.push(obs);
+        }
+
+        // 6. Controles
+        let moveLeft = false;
+        let moveRight = false;
+        window.addEventListener('keydown', (e) => {
+            if(e.key === "ArrowLeft") moveLeft = true;
+            if(e.key === "ArrowRight") moveRight = true;
+        });
+        window.addEventListener('keyup', (e) => {
+            if(e.key === "ArrowLeft") moveLeft = false;
+            if(e.key === "ArrowRight") moveRight = false;
+        });
+
+        // 7. Lógica del Juego (Game Loop)
         let score = 0;
-        let gameSpeed = 100;
+        let speed = 0.2;
 
-        // La serpiente es un array de objetos
-        let snake = [{ x: 10 * box, y: 10 * box }];
-        
-        // Comida
-        let food = {
-            x: Math.floor(Math.random() * 19 + 1) * box,
-            y: Math.floor(Math.random() * 19 + 1) * box
-        };
+        function animate() {
+            requestAnimationFrame(animate);
 
-        let d; // Dirección
+            // Movimiento del jugador
+            if(moveLeft && player.position.x > -4) player.position.x -= 0.1;
+            if(moveRight && player.position.x < 4) player.position.x += 0.1;
 
-        document.addEventListener("keydown", direction);
+            // Generar obstáculos aleatorios
+            if(Math.random() < 0.05) createObstacle();
 
-        function direction(event) {
-            if(event.keyCode == 37 && d != "RIGHT") d = "LEFT";
-            else if(event.keyCode == 38 && d != "DOWN") d = "UP";
-            else if(event.keyCode == 39 && d != "LEFT") d = "RIGHT";
-            else if(event.keyCode == 40 && d != "UP") d = "DOWN";
+            // Mover y limpiar obstáculos
+            obstacles.forEach((obs, index) => {
+                obs.position.z += speed;
+
+                // Detectar Colisión
+                if(obs.position.z > 0 && obs.position.z < 1) {
+                    const dist = Math.abs(obs.position.x - player.position.x);
+                    if(dist < 1) {
+                        alert("¡COLISIÓN! Puntos: " + Math.floor(score));
+                        location.reload();
+                    }
+                }
+
+                if(obs.position.z > 10) {
+                    scene.remove(obs);
+                    obstacles.splice(index, 1);
+                }
+            });
+
+            score += 0.1;
+            document.getElementById('score').innerText = Math.floor(score);
+            speed += 0.0001; // El juego se vuelve más rápido
+
+            renderer.render(scene, camera);
         }
 
-        function collision(head, array) {
-            for(let i = 0; i < array.length; i++) {
-                if(head.x == array[i].x && head.y == array[i].y) return true;
-            }
-            return false;
-        }
+        animate();
 
-        function draw() {
-            ctx.fillStyle = "black";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Dibujar serpiente
-            for(let i = 0; i < snake.length; i++) {
-                ctx.fillStyle = (i == 0) ? "#8b5cf6" : "#a78bfa";
-                ctx.strokeStyle = "#030712";
-                ctx.fillRect(snake[i].x, snake[i].y, box, box);
-                ctx.strokeRect(snake[i].x, snake[i].y, box, box);
-            }
-
-            // Dibujar comida
-            ctx.fillStyle = "#06b6d4";
-            ctx.beginPath();
-            ctx.arc(food.x + box/2, food.y + box/2, box/2, 0, Math.PI*2);
-            ctx.fill();
-
-            // Posición vieja de la cabeza
-            let snakeX = snake[0].x;
-            let snakeY = snake[0].y;
-
-            // Mover cabeza
-            if( d == "LEFT") snakeX -= box;
-            if( d == "UP") snakeY -= box;
-            if( d == "RIGHT") snakeX += box;
-            if( d == "DOWN") snakeY += box;
-
-            // Si la serpiente come
-            if(snakeX == food.x && snakeY == food.y) {
-                score++;
-                scoreElement.innerHTML = score;
-                food = {
-                    x: Math.floor(Math.random() * 19 + 1) * box,
-                    y: Math.floor(Math.random() * 19 + 1) * box
-                };
-            } else {
-                snake.pop(); // Quitar cola
-            }
-
-            let newHead = { x: snakeX, y: snakeY };
-
-            // Reglas de perder
-            if(snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
-                clearInterval(game);
-                alert("GAME OVER. Puntos: " + score);
-                location.reload(); // Reiniciar
-            }
-
-            snake.unshift(newHead); // Añadir nueva cabeza
-        }
-
-        let game = setInterval(draw, gameSpeed);
+        // Ajustar ventana
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
