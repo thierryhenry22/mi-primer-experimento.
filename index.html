@@ -2,242 +2,270 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>HENRY CRAFT: FINAL VERSION</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brainrot Blitz!</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-
-        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'VT323', monospace; }
-
-        /* PANTALLA DE CARGA / MENÚ */
-        #menu-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4); /* Sombra para resaltar texto */
-            display: flex; flex-direction: column; justify-content: center;
-            padding-left: 5%; z-index: 99; transition: opacity 0.5s;
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Arial Black', Gadget, sans-serif;
+            background: radial-gradient(circle at center, #1a1a1a, #000000); /* Fondo oscuro e intenso */
+            color: #fff;
+            cursor: url('https://i.imgur.com/Q2hD0rZ.png'), auto; /* Cursor de mano de meme */
+            user-select: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
 
-        h1 {
-            font-size: 140px; color: #fff; margin: 0;
-            text-shadow: 8px 8px 0 #000; letter-spacing: -5px; line-height: 0.8;
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            border: 5px solid #ff00ff; /* Borde de neón */
+            box-shadow: 0 0 30px #ff00ff;
+            background-size: cover;
+            background-position: center;
+            animation: glitchBg 10s infinite alternate; /* Fondo con efecto de glitch */
         }
-        h1 span { color: #e74c3c; } /* Rojo Henry */
-        
-        .btn-group { margin-top: 50px; display: flex; flex-direction: column; gap: 15px; }
-        
-        button {
-            width: 280px; padding: 15px; font-family: 'VT323', monospace; font-size: 40px;
-            background: #7f8c8d; color: white; border: 4px solid #fff;
-            text-shadow: 2px 2px 0 #000; cursor: pointer; text-align: left;
-            transition: transform 0.1s, background 0.1s;
-        }
-        button:hover { background: #e74c3c; transform: scale(1.1) translateX(20px); }
 
-        #ui-hud {
-            position: absolute; bottom: 20px; left: 20px; 
-            color: white; font-size: 24px; display: none;
-            text-shadow: 2px 2px 0 #000;
+        @keyframes glitchBg {
+            0% { background-image: url('https://i.imgur.com/G3P6G6K.jpeg'); } /* Fondo 1 */
+            33% { background-image: url('https://i.imgur.com/O6t6z4w.jpeg'); } /* Fondo 2 */
+            66% { background-image: url('https://i.imgur.com/P1b6hCj.jpeg'); } /* Fondo 3 */
+            100% { background-image: url('https://i.imgur.com/G3P6G6K.jpeg'); }
+        }
+
+        .brainrot-item {
+            position: absolute;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            pointer-events: auto; /* Permite hacer clic */
+            transform: scale(1) rotate(0deg);
+            transition: transform 0.1s ease-out; /* Animación de clic */
+        }
+
+        .brainrot-item:active {
+            transform: scale(0.9) rotate(5deg);
+        }
+
+        .target {
+            filter: drop-shadow(0 0 10px #00ff00); /* Resaltar targets */
+            z-index: 10;
+        }
+
+        .distraction {
+            filter: drop-shadow(0 0 5px #ff0000); /* Resaltar distracciones */
+            z-index: 5;
+        }
+
+        #score-display, #timer-display, #message-display {
+            position: absolute;
+            font-size: 3em;
+            color: #00ff00; /* Verde neón para el HUD */
+            text-shadow: 0 0 15px #00ff00, 0 0 20px #00ff00;
+            z-index: 100;
+            pointer-events: none;
+            text-align: center;
+            width: 100%;
+            top: 10px;
+            animation: neonFlicker 1.5s infinite alternate;
+        }
+
+        #timer-display {
+            top: 100px;
+            color: #ff00ff; /* Rosa neón para el tiempo */
+            text-shadow: 0 0 15px #ff00ff, 0 0 20px #ff00ff;
+        }
+
+        #message-display {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5em;
+            color: #ffff00; /* Amarillo brillante para mensajes */
+            text-shadow: 0 0 20px #ffff00;
+            display: none;
+        }
+
+        @keyframes neonFlicker {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        /* Música de fondo */
+        #audio-player {
+            display: none; /* Oculta el reproductor, se controlará por JS */
         }
     </style>
 </head>
 <body>
-
-    <div id="menu-screen">
-        <h1>HENRY<br><span>CRAFT</span></h1>
-        <div class="btn-group">
-            <button id="btn-jugar">JUGAR</button>
-            <button>OPCIONES</button>
-        </div>
+    <div id="game-container">
+        <div id="score-display">PUNTOS: 0</div>
+        <div id="timer-display">TIEMPO: 30</div>
+        <div id="message-display">¡COMIENZA!</div>
     </div>
 
-    <div id="ui-hud">FPS: 60 | BLOQUES: INFINITOS</div>
+    <audio id="audio-player" loop autoplay>
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-sci-fi-game-over-1960.mp3" type="audio/mpeg"> Tu navegador no soporta el elemento de audio.
+    </audio>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
+    <script>
+        const gameContainer = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('score-display');
+        const timerDisplay = document.getElementById('timer-display');
+        const messageDisplay = document.getElementById('message-display');
+        const audioPlayer = document.getElementById('audio-player');
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+        let score = 0;
+        let timeLeft = 30; // Segundos de juego
+        let gameInterval;
+        let itemSpawnInterval;
+        let gameRunning = false;
 
-        // --- VARIABLES GLOBALES ---
-        let isMenu = true;
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB);
-        scene.fog = new THREE.Fog(0x87CEEB, 20, 80);
+        // --- BIBLIOTECA DE MEMES (URLs de imágenes) ---
+        const memeImages = [
+            'https://i.imgur.com/1B9q90x.png', // Skibidi Toilet
+            'https://i.imgur.com/uFkS0vV.png', // Grimace Shake
+            'https://i.imgur.com/gK2g09n.png', // "Me when..."
+            'https://i.imgur.com/w2Y7JbX.png', // Sigma Male / Patrick Bateman
+            'https://i.imgur.com/sW2h0e7.png', // Ohio
+            'https://i.imgur.com/2Y5m4kO.png', // DaBaby Convertible
+            'https://i.imgur.com/0F9g770.png', // Wojak
+            'https://i.imgur.com/7iL6pYf.png', // Spongebob Meme
+            'https://i.imgur.com/Y3U72R7.png', // Quandale Dingle
+            'https://i.imgur.com/x5c9iR3.png', // Shrek
+            'https://i.imgur.com/qE4Cj7G.png', // Amogus
+            'https://i.imgur.com/mZ6P9oZ.png', // Pepe the Frog
+            'https://i.imgur.com/D4J8JjS.png', // Distraído
+            'https://i.imgur.com/9n9lJzP.png', // Patrick Star
+            'https://i.imgur.com/vHq4V9q.png', // Doge
+        ];
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        document.body.appendChild(renderer.domElement);
+        const targetSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'); // Sonido de clic correcto
+        const missSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-negative-game-notification-2470.mp3'); // Sonido de clic incorrecto
+        const gameOverSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-over-2824.mp3'); // Sonido de fin de juego
 
-        // --- ILUMINACIÓN ---
-        const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-        sun.position.set(50, 100, 50);
-        sun.castShadow = true;
-        sun.shadow.mapSize.width = 2048; 
-        sun.shadow.mapSize.height = 2048;
-        scene.add(sun, new THREE.AmbientLight(0xffffff, 0.4));
-
-        // --- MATERIALES ---
-        const matGrass = new THREE.MeshStandardMaterial({ color: 0x5da130 }); // Verde vibrante
-        const matLog = new THREE.MeshStandardMaterial({ color: 0x5d4037 });
-        const matLeaves = new THREE.MeshStandardMaterial({ color: 0x388e3c });
-        
-        // MATERIALES HENRY
-        const matRed = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-        const matBlue = new THREE.MeshStandardMaterial({ color: 0x0000ff });
-        const matSkin = new THREE.MeshStandardMaterial({ color: 0xffdbac });
-
-        // --- GENERACIÓN DE TERRENO ---
-        const geoBlock = new THREE.BoxGeometry(1, 1, 1);
-        function getH(x, z) {
-            // Terreno ondulado interesante
-            return Math.floor(Math.sin(x*0.1)*3 + Math.cos(z*0.1)*3 + 6);
-        }
-
-        // --- HENRY (El Protagonista) ---
-        let henry;
-        function createHenry() {
-            const group = new THREE.Group();
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            scoreDisplay.textContent = 'PUNTOS: 0';
+            timerDisplay.textContent = 'TIEMPO: 30';
+            gameContainer.innerHTML = `<div id="score-display">PUNTOS: 0</div><div id="timer-display">TIEMPO: 30</div><div id="message-display">¡COMIENZA!</div>`;
             
-            // Cabeza
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), matSkin);
-            head.position.y = 1.65;
-            
-            // Torso Rojo
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.25), matRed);
-            body.position.y = 1.05;
+            // Re-obtener los elementos que se sobrescribieron
+            scoreDisplay = document.getElementById('score-display');
+            timerDisplay = document.getElementById('timer-display');
+            messageDisplay = document.getElementById('message-display');
 
-            // Piernas Azules
-            const legL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.75, 0.2), matBlue);
-            legL.position.set(0.12, 0.35, 0);
-            const legR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.75, 0.2), matBlue);
-            legR.position.set(-0.12, 0.35, 0);
+            messageDisplay.textContent = '¡COMIENZA!';
+            messageDisplay.style.display = 'block';
+            audioPlayer.play(); // Iniciar música
 
-            // Brazos
-            const armL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.7, 0.2), matRed);
-            armL.position.set(0.36, 1.05, 0);
-            const armR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.7, 0.2), matRed);
-            armR.position.set(-0.36, 1.05, 0);
-
-            group.add(head, body, legL, legR, armL, armR);
-            group.castShadow = true;
-            return group;
+            setTimeout(() => {
+                messageDisplay.style.display = 'none';
+                gameRunning = true;
+                gameInterval = setInterval(updateGame, 1000);
+                itemSpawnInterval = setInterval(spawnBrainrotItem, 300); // Generar elementos cada 0.3 segundos
+            }, 3000);
         }
 
-        // Posicionamos a Henry en el mundo para que se vea en el menú
-        henry = createHenry();
-        const startX = 5; const startZ = 5;
-        const startY = getH(startX, startZ);
-        henry.position.set(startX, startY, startZ);
-        henry.rotation.y = -Math.PI / 4; // Mirando hacia la cámara del menú
-        scene.add(henry);
+        function spawnBrainrotItem() {
+            if (!gameRunning) return;
 
-        // --- ÁRBOLES Y DETALLES ---
-        function createTree(x, y, z) {
-            const tree = new THREE.Group();
-            const log = new THREE.Mesh(new THREE.BoxGeometry(0.8, 4, 0.8), matLog);
-            log.position.y = 2;
-            log.castShadow = true;
+            const item = document.createElement('div');
+            item.classList.add('brainrot-item');
             
-            const leaves = new THREE.Mesh(new THREE.BoxGeometry(3, 2, 3), matLeaves);
-            leaves.position.y = 4;
-            leaves.castShadow = true;
+            const randomImage = memeImages[Math.floor(Math.random() * memeImages.length)];
+            item.style.backgroundImage = `url('${randomImage}')`;
 
-            tree.add(log, leaves);
-            tree.position.set(x, y, z);
-            scene.add(tree);
-        }
+            const size = Math.random() * 150 + 50; // Tamaño aleatorio entre 50px y 200px
+            item.style.width = `${size}px`;
+            item.style.height = `${size}px`;
 
-        // GENERAR MUNDO ALREDEDOR (Radio visible)
-        for(let x=-20; x<20; x++) {
-            for(let z=-20; z<20; z++) {
-                const y = getH(x, z);
-                const block = new THREE.Mesh(geoBlock, matGrass);
-                block.position.set(x, y, z);
-                block.receiveShadow = true;
-                scene.add(block);
+            const x = Math.random() * (window.innerWidth - size);
+            const y = Math.random() * (window.innerHeight - size);
+            item.style.left = `${x}px`;
+            item.style.top = `${y}px`;
 
-                if(Math.random() < 0.02 && (Math.abs(x - startX) > 2)) { // No poner árboles encima de Henry
-                    createTree(x, y+1, z);
-                }
-            }
-        }
-
-        // --- LÓGICA DEL JUEGO ---
-        const controls = new PointerLockControls(camera, document.body);
-        const btnJugar = document.getElementById('btn-jugar');
-        const menuScreen = document.getElementById('menu-screen');
-        const hud = document.getElementById('ui-hud');
-
-        btnJugar.addEventListener('click', () => {
-            isMenu = false;
-            menuScreen.style.opacity = '0';
-            setTimeout(() => { menuScreen.style.display = 'none'; hud.style.display = 'block'; }, 500);
-            
-            // Transición: La cámara entra en Henry
-            henry.visible = false; // Desaparece Henry porque ahora ERES tú
-            camera.position.set(startX, startY + 2, startZ);
-            controls.lock();
-        });
-
-        // Física básica
-        let velocity = new THREE.Vector3();
-        let move = { f:false, b:false, l:false, r:false };
-        window.onkeydown = (e) => {
-            if(e.code == 'KeyW') move.f = true;
-            if(e.code == 'KeyS') move.b = true;
-            if(e.code == 'KeyA') move.l = true;
-            if(e.code == 'KeyD') move.r = true;
-            if(e.code == 'Space') velocity.y = 0.2;
-        };
-        window.onkeyup = (e) => {
-            if(e.code == 'KeyW') move.f = false;
-            if(e.code == 'KeyS') move.b = false;
-            if(e.code == 'KeyA') move.l = false;
-            if(e.code == 'KeyD') move.r = false;
-        };
-
-        let time = 0;
-        function animate() {
-            requestAnimationFrame(animate);
-            time += 0.01;
-
-            if(isMenu) {
-                // *** CÁMARA DE MENÚ ***
-                // La cámara orbita alrededor de Henry para que lo veas a él y al mundo
-                camera.position.x = henry.position.x + Math.sin(time * 0.5) * 6;
-                camera.position.z = henry.position.z + Math.cos(time * 0.5) * 6;
-                camera.position.y = henry.position.y + 3;
-                camera.lookAt(henry.position.x, henry.position.y + 1, henry.position.z);
+            // Decidir si es un target o una distracción
+            if (Math.random() < 0.6) { // 60% de probabilidad de ser un target
+                item.classList.add('target');
+                item.onclick = () => handleItemClick(item, true);
             } else {
-                // *** JUEGO REAL ***
-                if(controls.isLocked) {
-                    const speed = 0.15;
-                    if(move.f) controls.moveForward(speed);
-                    if(move.b) controls.moveForward(-speed);
-                    if(move.l) controls.moveRight(-speed);
-                    if(move.r) controls.moveRight(speed);
-                    
-                    velocity.y -= 0.01;
-                    camera.position.y += velocity.y;
-                    
-                    const ground = getH(Math.round(camera.position.x), Math.round(camera.position.z)) + 1.8;
-                    if(camera.position.y < ground) {
-                        camera.position.y = ground;
-                        velocity.y = 0;
-                    }
-                }
+                item.classList.add('distraction');
+                item.onclick = () => handleItemClick(item, false);
             }
-            renderer.render(scene, camera);
+
+            gameContainer.appendChild(item);
+
+            // Eliminar el item después de un tiempo para evitar sobrecarga y hacerlos efímeros
+            const lifetime = Math.random() * 2000 + 1000; // Vive entre 1 y 3 segundos
+            setTimeout(() => {
+                if (item.parentNode === gameContainer) {
+                    gameContainer.removeChild(item);
+                }
+            }, lifetime);
         }
-        animate();
+
+        function handleItemClick(item, isTarget) {
+            if (!gameRunning) return;
+
+            if (isTarget) {
+                score += 10;
+                targetSound.play();
+                item.style.filter = 'brightness(200%) invert(100%)'; // Efecto visual de acierto
+            } else {
+                score = Math.max(0, score - 5); // Penalización por distracción
+                missSound.play();
+                item.style.filter = 'grayscale(100%) blur(5px)'; // Efecto visual de error
+            }
+            scoreDisplay.textContent = `PUNTOS: ${score}`;
+            
+            // Eliminar el item inmediatamente después del clic
+            if (item.parentNode === gameContainer) {
+                gameContainer.removeChild(item);
+            }
+        }
+
+        function updateGame() {
+            if (!gameRunning) return;
+
+            timeLeft--;
+            timerDisplay.textContent = `TIEMPO: ${timeLeft}`;
+
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            gameRunning = false;
+            clearInterval(gameInterval);
+            clearInterval(itemSpawnInterval);
+            audioPlayer.pause();
+            gameOverSound.play();
+
+            messageDisplay.textContent = `¡FIN! Puntuación: ${score}`;
+            messageDisplay.style.display = 'block';
+
+            // Eliminar todos los ítems restantes
+            const items = gameContainer.querySelectorAll('.brainrot-item');
+            items.forEach(item => item.parentNode.removeChild(item));
+
+            setTimeout(() => {
+                // Reiniciar el juego después de unos segundos
+                messageDisplay.style.display = 'none';
+                startGame();
+            }, 5000); // 5 segundos para ver la puntuación final
+        }
+
+        // --- INICIO DEL JUEGO (Automático) ---
+        document.addEventListener('DOMContentLoaded', startGame);
     </script>
 </body>
 </html>
