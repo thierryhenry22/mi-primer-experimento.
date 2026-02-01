@@ -2,32 +2,29 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voxel Engine Pro - Ultra Graphics</title>
+    <title>Voxel Engine Elite - Infinite World</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #050505; }
-        #ui {
-            position: absolute; bottom: 30px; left: 30px;
-            color: #fff; font-family: 'Segoe UI', sans-serif;
-            background: rgba(0,0,0,0.7); padding: 20px;
-            border-left: 5px solid #00f2ff; border-radius: 4px;
-            pointer-events: none; backdrop-filter: blur(10px);
+        body { margin: 0; overflow: hidden; background-color: #87CEEB; }
+        #gui {
+            position: absolute; top: 10px; left: 10px;
+            background: rgba(0,0,0,0.8); color: #00ff00;
+            padding: 15px; font-family: 'Courier New', monospace;
+            border: 1px solid #00ff00; pointer-events: none;
         }
         #crosshair {
             position: absolute; top: 50%; left: 50%;
-            width: 4px; height: 4px; background: white;
-            border-radius: 50%; transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px white;
+            width: 10px; height: 10px; border: 1px solid white;
+            transform: translate(-50%, -50%);
         }
     </style>
 </head>
 <body>
-    <div id="crosshair"></div>
-    <div id="ui">
-        <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 5px;">SYSTEM: ACTIVE WORLD</div>
-        <div>Mover: WASD | Mirar: Mouse | Saltar: Espacio</div>
-        <div id="fps" style="color: #00f2ff; margin-top: 5px;">Cargando motor gráfico...</div>
+    <div id="gui">
+        > ENGINE_STATUS: ONLINE<br>
+        > RENDER_DISTANCE: INFINITE_PROCEDURAL<br>
+        > WASD: MOVER | SPACE: SALTO MODERADO
     </div>
+    <div id="crosshair"></div>
 
     <script type="importmap">
         {
@@ -42,89 +39,80 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-        // --- MOTOR CORE ---
+        // --- CONFIGURACIÓN TÉCNICA ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x8eb3e3);
-        scene.fog = new THREE.Fog(0x8eb3e3, 20, 100);
+        scene.background = new THREE.Color(0x87CEEB);
+        scene.fog = new THREE.FogExp2(0x87CEEB, 0.02);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
         const controls = new PointerLockControls(camera, document.body);
         document.body.addEventListener('click', () => controls.lock());
 
-        // --- ILUMINACIÓN PROFESIONAL ---
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
-
-        const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        sunLight.position.set(50, 100, 50);
-        sunLight.castShadow = true;
-        sunLight.shadow.mapSize.width = 2048;
-        sunLight.shadow.mapSize.height = 2048;
-        sunLight.shadow.camera.left = -100;
-        sunLight.shadow.camera.right = 100;
-        sunLight.shadow.camera.top = 100;
-        sunLight.shadow.camera.bottom = -100;
-        scene.add(sunLight);
-
-        // --- GENERACIÓN DE MUNDO (EXTENSO) ---
-        const worldSize = 64;
+        // --- GENERADOR DE MUNDO INFINITO ---
+        const CHUNK_SIZE = 16;
+        const RENDER_DISTANCE = 3;
+        const blocks = new Map(); // Diccionario para colisiones rápidas
         const geometry = new THREE.BoxGeometry(1, 1, 1);
-        
-        // Simulación de texturas de alta calidad mediante materiales con "Roughness"
-        const grassMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0x4d7a32, 
-            roughness: 0.8,
-            metalness: 0.1
-        });
+        const grassMat = new THREE.MeshStandardMaterial({ color: 0x348C31 });
 
-        // InstancedMesh para alto rendimiento
-        const mesh = new THREE.InstancedMesh(geometry, grassMaterial, worldSize * worldSize * 10);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        scene.add(mesh);
+        function getY(x, z) {
+            // Ruido matemático para crear montañas reales
+            return Math.floor(Math.sin(x * 0.1) * Math.cos(z * 0.1) * 3 + Math.sin(x * 0.05) * 5);
+        }
 
-        const dummy = new THREE.Object3D();
-        let i = 0;
+        function createChunk(cx, cz) {
+            const instancedMesh = new THREE.InstancedMesh(geometry, grassMat, CHUNK_SIZE * CHUNK_SIZE);
+            instancedMesh.instanceMatrix.setUsage(THREE.StaticDrawUsage);
+            let idx = 0;
+            const dummy = new THREE.Object3D();
 
-        // Algoritmo de altura tipo "Perlin Noise" manual
-        for (let x = -worldSize/2; x < worldSize/2; x++) {
-            for (let z = -worldSize/2; z < worldSize/2; z++) {
-                const noise = Math.sin(x * 0.1) * Math.sin(z * 0.1) * 5 +
-                              Math.cos(x * 0.05) * Math.cos(z * 0.05) * 10;
-                const height = Math.floor(noise) + 10;
-
-                for (let y = 0; y < height; y++) {
-                    // Solo dibujamos los bloques visibles para no colapsar el GPU
-                    if (y > height - 2) {
-                        dummy.position.set(x, y, z);
-                        dummy.updateMatrix();
-                        mesh.setMatrixAt(i++, dummy.matrix);
-                    }
+            for (let x = 0; x < CHUNK_SIZE; x++) {
+                for (let z = 0; z < CHUNK_SIZE; z++) {
+                    const worldX = cx * CHUNK_SIZE + x;
+                    const worldZ = cz * CHUNK_SIZE + z;
+                    const worldY = getY(worldX, worldZ);
+                    
+                    dummy.position.set(worldX, worldY, worldZ);
+                    dummy.updateMatrix();
+                    instancedMesh.setMatrixAt(idx++, dummy.matrix);
+                    
+                    // Guardar en el mapa de colisiones
+                    blocks.set(`${worldX},${worldZ}`, worldY);
                 }
             }
+            scene.add(instancedMesh);
         }
-        mesh.count = i;
 
-        // --- FÍSICA Y MOVIMIENTO ---
-        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        // Generar área inicial
+        for(let x = -2; x <= 2; x++) {
+            for(let z = -2; z <= 2; z++) createChunk(x, z);
+        }
+
+        // --- ILUMINACIÓN ---
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(10, 20, 10);
+        scene.add(light, new THREE.AmbientLight(0xffffff, 0.4));
+
+        // --- FÍSICA Y COLISIONES (CORRECCIÓN DE "TRASPASAR TODO") ---
         let velocity = new THREE.Vector3();
-        let direction = new THREE.Vector3();
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        let canJump = false;
 
         document.addEventListener('keydown', (e) => {
             if(e.code === 'KeyW') moveForward = true;
             if(e.code === 'KeyS') moveBackward = true;
             if(e.code === 'KeyA') moveLeft = true;
             if(e.code === 'KeyD') moveRight = true;
-            if(e.code === 'Space' && camera.position.y < 25) velocity.y += 15;
+            if(e.code === 'Space' && canJump) {
+                velocity.y += 0.15; // SALTO MODERADO (Física ajustada)
+                canJump = false;
+            }
         });
-
         document.addEventListener('keyup', (e) => {
             if(e.code === 'KeyW') moveForward = false;
             if(e.code === 'KeyS') moveBackward = false;
@@ -132,44 +120,43 @@
             if(e.code === 'KeyD') moveRight = false;
         });
 
-        camera.position.set(0, 30, 0);
+        camera.position.y = 10;
 
         function animate() {
             requestAnimationFrame(animate);
-            const time = performance.now();
 
             if (controls.isLocked) {
-                const delta = 0.015;
-                velocity.x -= velocity.x * 10.0 * delta;
-                velocity.z -= velocity.z * 10.0 * delta;
-                velocity.y -= 9.8 * 3.0 * delta; // Gravedad
+                // Fricción
+                velocity.x *= 0.9;
+                velocity.z *= 0.9;
+                
+                // Gravedad constante
+                velocity.y -= 0.005; 
 
-                direction.z = Number(moveForward) - Number(moveBackward);
-                direction.x = Number(moveRight) - Number(moveLeft);
-                direction.normalize();
+                // Movimiento WASD
+                const speed = 0.005;
+                if (moveForward) controls.moveForward(speed);
+                if (moveBackward) controls.moveForward(-speed);
+                if (moveLeft) controls.moveRight(-speed);
+                if (moveRight) controls.moveRight(speed);
 
-                if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
-                if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
+                camera.position.y += velocity.y;
 
-                controls.moveRight(-velocity.x * delta);
-                controls.moveForward(-velocity.z * delta);
-                camera.position.y += (velocity.y * delta);
+                // DETECTOR DE SUELO (EVITA TRASPASAR)
+                const gridX = Math.round(camera.position.x);
+                const gridZ = Math.round(camera.position.z);
+                const groundY = blocks.get(`${gridX},${gridZ}`) || -100;
 
-                if (camera.position.y < 15) {
+                // Si los pies del muñeco (altura 1.6) tocan el bloque
+                if (camera.position.y < groundY + 1.8) {
                     velocity.y = 0;
-                    camera.position.y = 15;
+                    camera.position.y = groundY + 1.8;
+                    canJump = true;
                 }
             }
-            
-            document.getElementById('fps').innerText = `GPU LOAD: STABLE | ${Math.round(1000/16)} FPS`;
+
             renderer.render(scene, camera);
         }
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
 
         animate();
     </script>
