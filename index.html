@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi IA Personal - Inteligencia Real</title>
+    <title>Mi IA Personal - Dashboard</title>
     <style>
         :root {
             --primary: #6366f1;
@@ -23,10 +23,11 @@
             align-items: center;
         }
 
+        /* Interfaz de cristal (Glassmorphism) */
         .chat-container {
             width: 95%;
-            max-width: 900px;
-            height: 85vh;
+            max-width: 850px;
+            height: 80vh;
             background: var(--glass);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
@@ -52,7 +53,6 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            scroll-behavior: smooth;
         }
 
         .bubble {
@@ -61,7 +61,6 @@
             border-radius: 20px;
             font-size: 1rem;
             line-height: 1.5;
-            position: relative;
             animation: fadeIn 0.3s ease;
         }
 
@@ -84,7 +83,7 @@
         }
 
         .input-area {
-            padding: 25px;
+            padding: 20px;
             display: flex;
             gap: 12px;
             background: rgba(0, 0, 0, 0.3);
@@ -98,66 +97,43 @@
             border-radius: 15px;
             color: white;
             outline: none;
-            font-size: 1rem;
-            transition: 0.3s;
-        }
-
-        input:focus {
-            border-color: var(--primary);
-            background: rgba(255, 255, 255, 0.1);
         }
 
         button {
             background: var(--primary);
             color: white;
             border: none;
-            padding: 0 30px;
+            padding: 0 25px;
             border-radius: 15px;
             cursor: pointer;
             font-weight: bold;
             transition: 0.3s;
         }
 
-        button:hover {
-            background: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
-        }
-
-        /* Indicador de carga */
-        .typing {
-            font-style: italic;
-            font-size: 0.8rem;
-            color: var(--accent);
-            margin-bottom: 10px;
-            display: none;
-        }
+        button:hover { background: var(--accent); transform: scale(1.02); }
     </style>
 </head>
 <body>
 
 <div class="chat-container">
     <div class="header">
-        <h2 style="margin:0; font-weight: 300; letter-spacing: 1px;">MI IA <span style="font-weight: 800; color: var(--accent);">PRO</span></h2>
+        <h2 style="margin:0; font-weight: 300;">MI IA <span style="font-weight: 800; color: var(--accent);">PRO</span></h2>
     </div>
     
     <div class="messages" id="chat-box">
-        <div class="bubble ai">Conexión establecida. Estoy lista para buscar datos en tiempo real. ¿En qué te ayudo?</div>
+        <div class="bubble ai">Sistema cargado. Estoy lista para asistirte.</div>
     </div>
 
-    <div id="loading" class="typing" style="padding-left: 25px;">Buscando información actualizada...</div>
-
     <div class="input-area">
-        <input type="text" id="user-input" placeholder="Escribe un mensaje o pregunta algo de actualidad..." onkeydown="if(event.key === 'Enter') sendMessage()">
+        <input type="text" id="user-input" placeholder="Escribe tu mensaje..." onkeydown="if(event.key === 'Enter') sendMessage()">
         <button onclick="sendMessage()">Enviar</button>
     </div>
 </div>
 
 <script>
-    async function sendMessage() {
+    function sendMessage() {
         const input = document.getElementById('user-input');
         const box = document.getElementById('chat-box');
-        const loading = document.getElementById('loading');
         const text = input.value.trim();
         
         if(text !== "") {
@@ -166,39 +142,32 @@
             input.value = "";
             box.scrollTop = box.scrollHeight;
 
-            // Mostrar indicador de carga
-            loading.style.display = "block";
-
-            // Lógica de respuesta
-            setTimeout(async () => {
+            // Procesar respuesta
+            setTimeout(() => {
                 let response = "";
                 const lowerText = text.toLowerCase();
 
-                // 1. Respuesta de Autoría
-                if (lowerText.includes("quién te creó") || lowerText.includes("quien te creo")) {
-                    response = "Fuiste tú quien me creó. Estoy diseñada bajo tu código para ser tu asistente personal avanzada.";
+                // 1. Saludo cordial
+                if (lowerText === "hola" || lowerText === "buenos dias" || lowerText === "buenas tardes") {
+                    response = "¡Hola! Es un placer saludarte. ¿En qué puedo apoyarte con nuestro proyecto hoy?";
                 } 
-                // 2. Simulación de Búsqueda en Tiempo Real
-                else if (lowerText.includes("noticias") || lowerText.includes("clima") || lowerText.includes("hoy") || lowerText.includes("precio")) {
-                    response = await buscarEnTiempoReal(text);
+                // 2. Respuesta de Autoría
+                else if (lowerText.includes("quién te creó") || lowerText.includes("quien te creo")) {
+                    response = "Tú eres mi creador. He sido desarrollada bajo tu código y visión para ser una inteligencia artificial avanzada.";
                 }
-                // 3. Respuesta Genérica
+                // 3. Respuesta básica adicional (¿Qué puedes hacer?)
+                else if (lowerText.includes("qué puedes hacer") || lowerText.includes("que puedes hacer")) {
+                    response = "Puedo ayudarte a programar, analizar datos y buscar información en tiempo real para que nuestra IA sea tan potente como Gemini.";
+                }
+                // 4. Respuesta por defecto
                 else {
-                    response = "He analizado tu mensaje. ¿Te gustaría que busque datos específicos en la web sobre esto?";
+                    response = "Entendido. Estoy procesando tu solicitud para darte los mejores datos posibles.";
                 }
 
-                loading.style.display = "none";
                 box.innerHTML += `<div class="bubble ai">${response}</div>`;
                 box.scrollTop = box.scrollHeight;
-            }, 800);
+            }, 600);
         }
-    }
-
-    // Esta función es el puente para los datos reales
-    async function buscarEnTiempoReal(consulta) {
-        // Aquí es donde conectarás tu API Key en el futuro
-        // Por ahora, simulamos una respuesta de "red"
-        return `[Búsqueda en tiempo real activa]: He encontrado que hoy es ${new Date().toLocaleDateString()} y hay varias actualizaciones sobre "${consulta}" en la red. (Para resultados exactos, conecta tu API de Google o Tavily en el script).`;
     }
 </script>
 
