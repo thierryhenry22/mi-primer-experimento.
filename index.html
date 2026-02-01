@@ -2,136 +2,163 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Motorcycle Hill Rider</title>
+    <title>Neural Rider Pro - 3D Ultra</title>
     <style>
-        body { margin: 0; background: #0f172a; overflow: hidden; font-family: sans-serif; }
-        #ui { position: absolute; top: 20px; left: 20px; color: white; font-size: 24px; pointer-events: none; }
-        canvas { display: block; background: linear-gradient(#0ea5e9, #38bdf8); }
-        .controls { position: absolute; bottom: 20px; width: 100%; text-align: center; color: white; opacity: 0.7; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; }
+        #overlay {
+            position: absolute; top: 20px; width: 100%; text-align: center;
+            color: #06b6d4; font-size: 2rem; text-shadow: 0 0 15px #06b6d4;
+            pointer-events: none; letter-spacing: 4px;
+        }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div id="ui">Distancia: <span id="dist">0</span>m</div>
-    <div class="controls">Usa Flecha ARRIBA para Acelerar | IZQ/DER para Inclinar</div>
-    <canvas id="gameCanvas"></canvas>
+    <div id="overlay">VELOCIDAD: <span id="dist">0</span> KM/H</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        const distElement = document.getElementById("dist");
+        // --- CONFIGURACIÓN ESCENA ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x030712, 0.02); // Niebla para profundidad
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
 
-        // --- CONFIGURACIÓN ---
-        let bike = {
-            x: 100,
-            y: 0,
-            vY: 0,
-            rot: 0,
-            vRot: 0,
-            speed: 0
-        };
+        // --- LUCES ---
+        const hemiLight = new THREE.HemisphereLight(0x404040, 0x030712, 1);
+        scene.add(hemiLight);
 
-        let terrain = [];
-        let offset = 0;
-        const gravity = 0.15;
+        const pointLight = new THREE.PointLight(0x8b5cf6, 2, 50);
+        pointLight.position.set(0, 5, 5);
+        scene.add(pointLight);
 
-        // Generar terreno inicial usando ondas seno
-        for (let i = 0; i < 2000; i++) {
-            terrain.push(Math.sin(i * 0.05) * 50 + Math.sin(i * 0.01) * 100 + canvas.height / 1.5);
+        // --- TERRENO (MONTAÑAS) ---
+        const planeGeo = new THREE.PlaneGeometry(100, 500, 64, 64);
+        // Deformar plano para crear montañas
+        const posArr = planeGeo.attributes.position.array;
+        for(let i = 0; i < posArr.length; i += 3) {
+            const x = posArr[i];
+            const y = posArr[i+1];
+            // Algoritmo simple de montañas
+            posArr[i+2] = Math.sin(x * 0.2) * Math.cos(y * 0.1) * 3 + Math.sin(y * 0.05) * 5;
+        }
+        planeGeo.computeVertexNormals();
+
+        const planeMat = new THREE.MeshPhongMaterial({ 
+            color: 0x111827, 
+            wireframe: true, // Estilo Grid Cyber
+            emissive: 0x06b6d4,
+            emissiveIntensity: 0.1
+        });
+
+        const floor = new THREE.Mesh(planeGeo, planeMat);
+        floor.rotation.x = -Math.PI / 2;
+        scene.add(floor);
+
+        // --- VEHÍCULO (MOTO CYBER) ---
+        const bikeGroup = new THREE.Group();
+        
+        // Cuerpo principal
+        const bodyGeo = new THREE.BoxGeometry(0.8, 0.5, 2);
+        const bodyMat = new THREE.MeshPhongMaterial({ color: 0x000000, emissive: 0x8b5cf6 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        bikeGroup.add(body);
+
+        // Luz trasera neón
+        const tailLightGeo = new THREE.BoxGeometry(0.7, 0.1, 0.1);
+        const tailLightMat = new THREE.MeshBasicMaterial({ color: 0xff0044 });
+        const tailLight = new THREE.Mesh(tailLightGeo, tailLightMat);
+        tailLight.position.set(0, 0, -1);
+        bikeGroup.add(tailLight);
+
+        scene.add(bikeGroup);
+        bikeGroup.position.y = 1;
+
+        // --- OBSTÁCULOS ---
+        let obsArr = [];
+        function spawnObs() {
+            const geo = new THREE.IcosahedronGeometry(1, 0);
+            const mat = new THREE.MeshPhongMaterial({ color: 0x06b6d4, wireframe: true });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set((Math.random() - 0.5) * 20, 1, -200);
+            scene.add(mesh);
+            obsArr.push(mesh);
         }
 
-        // --- CONTROLES ---
+        // --- LÓGICA DE MOVIMIENTO ---
         let keys = {};
         window.onkeydown = (e) => keys[e.key] = true;
         window.onkeyup = (e) => keys[e.key] = false;
 
-        function update() {
-            // Acelerar
-            if (keys["ArrowUp"]) bike.speed += 0.2;
-            else bike.speed *= 0.98; // Fricción
-            
-            if (bike.speed > 8) bike.speed = 8;
+        let speed = 0;
+        let rotationTarget = 0;
 
-            // Inclinación
-            if (keys["ArrowLeft"]) bike.vRot -= 0.01;
-            if (keys["ArrowRight"]) bike.vRot += 0.01;
+        function animate() {
+            requestAnimationFrame(animate);
 
-            offset += bike.speed;
-            
-            // Física de la moto
-            let currentX = Math.floor(bike.x + offset);
-            let groundY = terrain[currentX % terrain.length];
+            // Aceleración y dirección
+            if(keys["ArrowUp"]) speed += 0.01;
+            else speed *= 0.98;
 
-            if (bike.y < groundY - 20) {
-                bike.vY += gravity; // Caída libre
+            if(keys["ArrowLeft"]) {
+                bikeGroup.position.x -= 0.15;
+                bikeGroup.rotation.z = 0.3; // Inclinar moto
+            } else if(keys["ArrowRight"]) {
+                bikeGroup.position.x += 0.15;
+                bikeGroup.rotation.z = -0.3;
             } else {
-                // Al tocar el suelo, seguir la pendiente
-                let nextY = terrain[(currentX + 1) % terrain.length];
-                let angle = Math.atan2(nextY - groundY, 1);
-                
-                bike.y = groundY - 20;
-                bike.vY = 0;
-                
-                // Alineación automática con el suelo
-                bike.rot += (angle - bike.rot) * 0.1;
+                bikeGroup.rotation.z *= 0.9;
             }
 
-            bike.y += bike.vY;
-            bike.rot += bike.vRot;
-            bike.vRot *= 0.9; // Fricción de rotación
+            // El terreno se mueve hacia atrás para simular avance infinito
+            floor.position.z += speed * 50;
+            if(floor.position.z > 100) floor.position.z = 0;
 
-            // Actualizar UI
-            distElement.innerText = Math.floor(offset / 10);
+            // Mover obstáculos
+            obsArr.forEach((obs, i) => {
+                obs.position.z += speed * 50;
+                if(obs.position.z > 20) {
+                    scene.remove(obs);
+                    obsArr.splice(i, 1);
+                }
+                // Colisión simple
+                if(bikeGroup.position.distanceTo(obs.position) < 1.5) {
+                    speed = 0;
+                    alert("SISTEMA DAÑADO - REINICIANDO");
+                    location.reload();
+                }
+            });
 
-            // Perder si se voltea demasiado
-            if (Math.abs(bike.rot) > Math.PI / 1.5) {
-                alert("¡Te accidentaste! Distancia: " + Math.floor(offset/10) + "m");
-                location.reload();
-            }
+            if(Math.random() < 0.05) spawnObs();
+
+            // --- CÁMARA QUE SIGUE AL CARRO ---
+            // La cámara se mantiene detrás de la moto y se mueve con ella en el eje X
+            camera.position.x += (bikeGroup.position.x - camera.position.x) * 0.1;
+            camera.position.y = 4;
+            camera.position.z = bikeGroup.position.z + 6;
+            camera.lookAt(bikeGroup.position.x, 1, bikeGroup.position.z - 10);
+
+            // UI
+            document.getElementById('dist').innerText = Math.floor(speed * 1000);
+
+            renderer.render(scene, camera);
         }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        animate();
 
-            // Dibujar Terreno
-            ctx.fillStyle = "#16a34a";
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height);
-            for (let i = 0; i < canvas.width; i++) {
-                ctx.lineTo(i, terrain[Math.floor(i + offset) % terrain.length]);
-            }
-            ctx.lineTo(canvas.width, canvas.height);
-            ctx.fill();
-
-            // Dibujar Moto (Representada por un cuerpo y dos ruedas)
-            ctx.save();
-            ctx.translate(bike.x, bike.y);
-            ctx.rotate(bike.rot);
-
-            // Cuerpo de la moto (Color Pro)
-            ctx.fillStyle = "#8b5cf6";
-            ctx.fillRect(-20, -10, 40, 10);
-            ctx.fillStyle = "white"; // Casco/Piloto
-            ctx.fillRect(-5, -25, 15, 15);
-
-            // Ruedas
-            ctx.fillStyle = "#333";
-            ctx.beginPath(); ctx.arc(-15, 5, 8, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(15, 5, 8, 0, Math.PI * 2); ctx.fill();
-
-            ctx.restore();
-        }
-
-        function gameLoop() {
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
-
-        gameLoop();
+        // Redimensionar
+        window.onresize = () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        };
     </script>
 </body>
 </html>
