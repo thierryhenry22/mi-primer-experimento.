@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Voxel World Elite - Life Update</title>
+    <title>Voxel World Elite - Realism Update</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #87CEEB; }
         #gui {
@@ -13,7 +13,7 @@
     </style>
 </head>
 <body>
-    <div id="gui"><b>MOVIMIENTO:</b> WASD | <b>VELOCIDAD:</b> MÁXIMA | <b>SALTO:</b> POTENCIADO</div>
+    <div id="gui"><b>MOVIMIENTO:</b> WASD | <b>SOL:</b> ACTIVO | <b>ANIMALES:</b> REALISTAS</div>
 
     <script type="importmap">
         {
@@ -28,88 +28,120 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-        // --- CORE ---
+        // --- ESCENA Y CONFIGURACIÓN ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87CEEB);
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true; // Sombra para realismo
         document.body.appendChild(renderer.domElement);
 
         const controls = new PointerLockControls(camera, document.body);
         document.body.addEventListener('click', () => controls.lock());
 
-        // --- RECURSOS ---
-        const geoBlock = new THREE.BoxGeometry(0.98, 0.98, 0.98); // Separación sutil
+        // --- SOL Y CIELO ---
+        const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+        sun.position.set(50, 100, 50);
+        sun.castShadow = true;
+        // Mejorar calidad de sombras
+        sun.shadow.mapSize.width = 1024;
+        sun.shadow.mapSize.height = 1024;
+        scene.add(sun, new THREE.AmbientLight(0xffffff, 0.4));
+
+        // Cubo visual para el Sol
+        const sunGeometry = new THREE.BoxGeometry(4, 4, 4);
+        const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFF00 });
+        const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
+        sunMesh.position.set(60, 80, -60);
+        scene.add(sunMesh);
+
+        // --- MATERIALES Y BLOQUES ---
+        const geoBlock = new THREE.BoxGeometry(0.99, 0.99, 0.99);
         const matGrass = new THREE.MeshStandardMaterial({ color: 0x4d8c3a });
-        const matLog = new THREE.MeshStandardMaterial({ color: 0x5d4037 });
-        const matLeaves = new THREE.MeshStandardMaterial({ color: 0x2e7d32 });
-        const matFlower = new THREE.MeshStandardMaterial({ color: 0xff4081 });
+        const matWool = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        const matSkin = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+        const matEye = new THREE.MeshStandardMaterial({ color: 0x000000 });
 
-        const chunks = new Map();
-        const CHUNK_SIZE = 16;
-        const VIEW_DISTANCE = 3;
+        // --- SISTEMA DE OVEJAS REALISTAS ---
+        const entities = [];
+        function createRealisticSheep(x, y, z) {
+            const sheep = new THREE.Group();
 
-        // --- GENERADOR DE MUNDO DINÁMICO ---
-        function getH(x, z) {
-            return Math.floor(Math.sin(x * 0.1) * 2 + Math.cos(z * 0.1) * 2 + 5);
+            // 1. Cuerpo (Rectangular, no un cubo)
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.8, 1.3), matWool);
+            body.position.y = 0.8;
+            body.castShadow = true;
+            sheep.add(body);
+
+            // 2. Cabeza con Ojos y Hocico
+            const headGroup = new THREE.Group();
+            const headBox = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), matWool);
+            
+            // Ojos (Mini cubos reales)
+            const eyeGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+            const eyeL = new THREE.Mesh(eyeGeo, matEye);
+            eyeL.position.set(0.15, 0.1, 0.31);
+            const eyeR = new THREE.Mesh(eyeGeo, matEye);
+            eyeR.position.set(-0.15, 0.1, 0.31);
+            
+            // Hocico
+            const snout = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.1), matSkin);
+            snout.position.set(0, -0.1, 0.31);
+
+            headGroup.add(headBox, eyeL, eyeR, snout);
+            headGroup.position.set(0, 1.1, 0.8);
+            sheep.add(headGroup);
+
+            // 3. Patas (4 unidades separadas)
+            const legGeo = new THREE.BoxGeometry(0.2, 0.6, 0.2);
+            const positions = [[0.25, 0.3, 0.4], [-0.25, 0.3, 0.4], [0.25, 0.3, -0.4], [-0.25, 0.3, -0.4]];
+            positions.forEach(pos => {
+                const leg = new THREE.Mesh(legGeo, matSkin);
+                leg.position.set(...pos);
+                sheep.add(leg);
+            });
+
+            sheep.position.set(x, y, z);
+            scene.add(sheep);
+            entities.push({ mesh: sheep, timer: 0, targetRot: 0 });
         }
 
-        function createTree(x, y, z) {
-            const tree = new THREE.Group();
-            // Tronco
-            for(let i=0; i<4; i++) {
-                const log = new THREE.Mesh(geoBlock, matLog);
-                log.position.set(x, y + i, z);
-                tree.add(log);
-            }
-            // Hojas
-            for(let ox=-1; ox<=1; ox++) {
-                for(let oz=-1; oz<=1; oz++) {
-                    for(let oy=0; oy<2; oy++) {
-                        const leaf = new THREE.Mesh(geoBlock, matLeaves);
-                        leaf.position.set(x + ox, y + 4 + oy, z + oz);
-                        tree.add(leaf);
-                    }
-                }
-            }
-            scene.add(tree);
+        // --- GENERADOR DE CHUNKS (Tu código base) ---
+        const chunks = new Map();
+        const CHUNK_SIZE = 16;
+        const VIEW_DISTANCE = 2;
+
+        function getH(x, z) {
+            return Math.floor(Math.sin(x * 0.1) * 2 + Math.cos(z * 0.1) * 2 + 5);
         }
 
         function createChunk(cx, cz) {
             const key = `${cx},${cz}`;
             if(chunks.has(key)) return;
             
-            const mesh = new THREE.InstancedMesh(geoBlock, matGrass, CHUNK_SIZE * CHUNK_SIZE);
-            const dummy = new THREE.Object3D();
-            let idx = 0;
-
+            const group = new THREE.Group();
             for(let x=0; x<CHUNK_SIZE; x++) {
                 for(let z=0; z<CHUNK_SIZE; z++) {
                     const wx = cx * CHUNK_SIZE + x;
                     const wz = cz * CHUNK_SIZE + z;
                     const wy = getH(wx, wz);
                     
-                    dummy.position.set(wx, wy, wz);
-                    dummy.updateMatrix();
-                    mesh.setMatrixAt(idx++, dummy.matrix);
+                    const block = new THREE.Mesh(geoBlock, matGrass);
+                    block.position.set(wx, wy, wz);
+                    block.receiveShadow = true;
+                    block.matrixAutoUpdate = false;
+                    block.updateMatrix();
+                    group.add(block);
 
-                    // Probabilidad de Árboles (1%)
-                    if(Math.random() < 0.015) createTree(wx, wy + 1, wz);
-                    
-                    // Flores
-                    if(Math.random() < 0.05) {
-                        const flower = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), matFlower);
-                        flower.position.set(wx, wy + 0.8, wz);
-                        scene.add(flower);
-                    }
+                    if(Math.random() < 0.005) createRealisticSheep(wx, wy + 1, wz);
                 }
             }
-            scene.add(mesh);
-            chunks.set(key, mesh);
+            scene.add(group);
+            chunks.set(key, group);
         }
 
-        // --- FÍSICA Y CONTROL ---
+        // --- FÍSICA Y ANIMACIÓN ---
         let velocity = new THREE.Vector3();
         let move = { f: false, b: false, l: false, r: false };
         let canJump = false;
@@ -119,7 +151,7 @@
             if(e.code === 'KeyS') move.b = true;
             if(e.code === 'KeyA') move.l = true;
             if(e.code === 'KeyD') move.r = true;
-            if(e.code === 'Space' && canJump) { velocity.y = 0.22; canJump = false; }
+            if(e.code === 'Space' && canJump) { velocity.y = 0.25; canJump = false; }
         });
         window.addEventListener('keyup', (e) => {
             if(e.code === 'KeyW') move.f = false;
@@ -128,22 +160,18 @@
             if(e.code === 'KeyD') move.r = false;
         });
 
-        const sun = new THREE.DirectionalLight(0xffffff, 1);
-        sun.position.set(10, 20, 10);
-        scene.add(sun, new THREE.AmbientLight(0xffffff, 0.5));
-
-        camera.position.set(0, 10, 0);
+        camera.position.set(0, 15, 0);
 
         function animate() {
             requestAnimationFrame(animate);
             if(controls.isLocked) {
-                const speed = 0.15; // VELOCIDAD AUMENTADA
+                const speed = 0.2; 
                 if(move.f) controls.moveForward(speed);
                 if(move.b) controls.moveForward(-speed);
                 if(move.l) controls.moveRight(-speed);
                 if(move.r) controls.moveRight(speed);
 
-                velocity.y -= 0.01; // Gravedad
+                velocity.y -= 0.01;
                 camera.position.y += velocity.y;
 
                 const gy = getH(Math.round(camera.position.x), Math.round(camera.position.z));
@@ -153,6 +181,7 @@
                     canJump = true;
                 }
 
+                // Generar chunks
                 const pcx = Math.floor(camera.position.x / CHUNK_SIZE);
                 const pcz = Math.floor(camera.position.z / CHUNK_SIZE);
                 for(let x=-VIEW_DISTANCE; x<=VIEW_DISTANCE; x++) {
