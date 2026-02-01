@@ -1,136 +1,102 @@
-#include <stdio.h>
-#include <string.h>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Henry AI | Master Interface (Streaming)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    /* (Mantén aquí tu CSS actual; por brevedad lo omitimos en este bloque) */
+    /* ... copia el CSS que ya tienes en tu index actualizado ... */
+    :root{ --accent:#4285f4; }
+    /* styles mínimos para demo */
+    body{ font-family:Inter,system-ui; background:#0f1114; color:#e7eef8; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .gemini-container{ width:90%; max-width:720px; padding:24px; border-radius:20px; background:rgba(255,255,255,0.03); }
+    #ai-response{ min-height:3.2rem; font-weight:600; margin-bottom:12px; }
+    .input-group{ display:flex; gap:12px; }
+    .input{ flex:1; padding:10px; border-radius:10px; border:none; background:transparent; color:inherit; outline: none; }
+    .btn-execute{ background:linear-gradient(90deg,var(--accent),#9b72cb); color:white; padding:10px 16px; border-radius:10px; border:none; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <main class="gemini-container" role="main">
+    <h1>Henry AI (Streaming)</h1>
+    <div id="ai-response" aria-live="polite" aria-atomic="true">Sistemas listos. ¿Qué deseas consultar?</div>
 
-#define MAX_ESTUDIANTES 50
+    <div class="input-group">
+      <input id="user-input" class="input" type="text" placeholder="Escribe un comando o color..." onkeypress="handleEnter(event)" />
+      <button id="exec" class="btn-execute" onclick="streamProcesarIA()">Ejecutar Protocolo</button>
+    </div>
+  </main>
 
-// Estructura solicitada en el proyecto
-struct Estudiante {
-    int matricula;
-    char nombre[50];
-    float notas[3]; // [0]: Parcial 1, [1]: Parcial 2, [2]: Proyecto
-    float promedio;
-};
+  <script>
+    const inputEl = document.getElementById('user-input');
+    const aiResponse = document.getElementById('ai-response');
+    const execBtn = document.getElementById('exec');
 
-// Prototipos de funciones
-void registrarEstudiantes(struct Estudiante grupo[], int *total);
-void calcularPromedios(struct Estudiante grupo[], int total);
-void mostrarReporte(struct Estudiante grupo[], int total);
-void buscarEstudiante(struct Estudiante grupo[], int total);
+    function handleEnter(e){
+      if(e.key === 'Enter') streamProcesarIA();
+    }
 
-int main() {
-    struct Estudiante seccion[MAX_ESTUDIANTES];
-    int numEstudiantes = 0;
-    int opcion;
+    // función que consume el stream desde /api/chat y lo muestra en tiempo real:
+    async function streamProcesarIA(){
+      const message = inputEl.value?.trim();
+      if(!message) return;
+      // estado UI
+      execBtn.disabled = true;
+      execBtn.textContent = 'Conectando...';
+      aiResponse.textContent = ''; // limpiamos la respuesta anterior
 
-    do {
-        printf("\n--- SISTEMA DE GESTION UPTA ---");
-        printf("\n1. Registrar Estudiantes");
-        printf("\n2. Calcular Promedios");
-        printf("\n3. Ver Reporte General");
-        printf("\n4. Buscar Estudiante");
-        printf("\n5. Salir");
-        printf("\nSeleccione una opcion: ");
-        scanf("%d", &opcion);
+      try {
+        const resp = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
 
-        switch(opcion) {
-            case 1:
-                registrarEstudiantes(seccion, &numEstudiantes);
-                break;
-            case 2:
-                calcularPromedios(seccion, numEstudiantes);
-                break;
-            case 3:
-                mostrarReporte(seccion, numEstudiantes);
-                break;
-            case 4:
-                buscarEstudiante(seccion, numEstudiantes);
-                break;
-            case 5:
-                printf("Saliendo del sistema...\n");
-                break;
-            default:
-                printf("Opcion no valida.\n");
+        if(!resp.ok) {
+          const err = await resp.text();
+          aiResponse.textContent = 'Error: ' + err;
+          return;
         }
-    } while(opcion != 5);
 
-    return 0;
-}
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+        let accumulated = '';
 
-void registrarEstudiantes(struct Estudiante grupo[], int *total) {
-    int cantidad, i, j;
-    printf("¿Cuantos estudiantes desea registrar? ");
-    scanf("%d", &cantidad);
+        execBtn.textContent = 'Conectado · Recibiendo...';
 
-    for(i = 0; i < cantidad; i++) {
-        printf("\n--- Datos del Estudiante %d ---\n", *total + 1);
-        printf("Matricula: ");
-        scanf("%d", &grupo[*total].matricula);
-        getchar(); // Limpiar el buffer
-        printf("Nombre completo: ");
-        fgets(grupo[*total].nombre, 50, stdin);
-        grupo[*total].nombre[strcspn(grupo[*total].nombre, "\n")] = 0; // Quitar el salto de linea
-
-        for(j = 0; j < 3; j++) {
-            do {
-                printf("Nota %d (0-20): ", j + 1);
-                scanf("%f", &grupo[*total].notas[j]);
-                if(grupo[*total].notas[j] < 0 || grupo[*total].notas[j] > 20) {
-                    printf("¡Error! La nota debe estar entre 0 y 20.\n");
-                }
-            } while(grupo[*total].notas[j] < 0 || grupo[*total].notas[j] > 20);
-        }
-        (*total)++;
-    }
-}
-
-void calcularPromedios(struct Estudiante grupo[], int total) {
-    if(total == 0) {
-        printf("No hay datos registrados.\n");
-        return;
-    }
-    for(int i = 0; i < total; i++) {
-        float suma = 0;
-        for(int j = 0; j < 3; j++) {
-            suma += grupo[i].notas[j];
-        }
-        grupo[i].promedio = suma / 3;
-    }
-    printf("Promedios calculados exitosamente.\n");
-}
-
-void mostrarReporte(struct Estudiante grupo[], int total) {
-    if(total == 0) {
-        printf("No hay datos para mostrar.\n");
-        return;
-    }
-    printf("\n%-10s %-20s %-10s %-10s %-10s %-10s %-10s\n", 
-           "Matricula", "Nombre", "P1", "P2", "Proj", "Prom", "Estado");
-    printf("--------------------------------------------------------------------------------\n");
-    for(int i = 0; i < total; i++) {
-        printf("%-10d %-20s %-10.2f %-10.2f %-10.2f %-10.2f %-10s\n",
-               grupo[i].matricula, 
-               grupo[i].nombre, 
-               grupo[i].notas[0], 
-               grupo[i].notas[1], 
-               grupo[i].notas[2], 
-               grupo[i].promedio,
-               (grupo[i].promedio >= 9.5) ? "APROBADO" : "REPROBADO");
-    }
-}
-
-void buscarEstudiante(struct Estudiante grupo[], int total) {
-    int buscaMat;
-    int encontrado = 0;
-    printf("Ingrese la matricula a buscar: ");
-    scanf("%d", &buscaMat);
-
-    for(int i = 0; i < total; i++) {
-        if(grupo[i].matricula == buscaMat) {
-            printf("\nEstudiante encontrado: %s", grupo[i].nombre);
-            printf("\nPromedio: %.2f\n", grupo[i].promedio);
-            encontrado = 1;
+        while(!done){
+          const { value, done: readerDone } = await reader.read();
+          if(readerDone) {
+            done = true;
             break;
+          }
+          const chunk = decoder.decode(value, { stream: true });
+          // appendamos el chunk tal cual (el servidor envía tokens parciales)
+          accumulated += chunk;
+          aiResponse.textContent = accumulated;
+          // opcional: scroll, caret visual, etc.
         }
+
+        // final:
+        execBtn.textContent = 'Ejecutar Protocolo';
+        inputEl.value = '';
+        inputEl.focus();
+
+      } catch (err) {
+        console.error('Streaming error', err);
+        aiResponse.textContent = 'Error de conexión. Revisa la consola.';
+        execBtn.textContent = 'Ejecutar Protocolo';
+      } finally {
+        execBtn.disabled = false;
+      }
     }
-    if(!encontrado) printf("Estudiante no registrado.\n");
-}
+
+    // foco en carga
+    window.addEventListener('load', ()=> setTimeout(()=> inputEl.focus(),300));
+  </script>
+</body>
+</html>
