@@ -2,19 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Voxel World Elite - Life Update</title>
+    <title>Voxel Engine Pro - Life & Nature</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #87CEEB; }
-        #gui {
-            position: absolute; top: 10px; left: 10px;
-            background: rgba(0,0,0,0.8); color: #fff;
-            padding: 10px; font-family: sans-serif; border-left: 5px solid #00ff00;
-        }
+        body { margin: 0; overflow: hidden; background: #87CEEB; }
+        #ui { position: absolute; bottom: 20px; left: 20px; color: white; font-family: 'Courier New', monospace; text-shadow: 2px 2px black; }
     </style>
 </head>
 <body>
-    <div id="gui"><b>MOVIMIENTO:</b> WASD | <b>VELOCIDAD:</b> MÁXIMA | <b>SALTO:</b> POTENCIADO</div>
-
+    <div id="ui">VELOCIDAD: TURBO | ENTIDADES: ACTIVAS</div>
     <script type="importmap">
         {
             "imports": {
@@ -28,138 +23,119 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-        // --- CORE ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB);
+        scene.background = new THREE.Color(0x4488ff);
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
         const controls = new PointerLockControls(camera, document.body);
         document.body.addEventListener('click', () => controls.lock());
 
-        // --- RECURSOS ---
-        const geoBlock = new THREE.BoxGeometry(0.98, 0.98, 0.98); // Separación sutil
-        const matGrass = new THREE.MeshStandardMaterial({ color: 0x4d8c3a });
-        const matLog = new THREE.MeshStandardMaterial({ color: 0x5d4037 });
-        const matLeaves = new THREE.MeshStandardMaterial({ color: 0x2e7d32 });
-        const matFlower = new THREE.MeshStandardMaterial({ color: 0xff4081 });
+        // --- MATERIALES Y GEOMETRÍA ---
+        const geoBlock = new THREE.BoxGeometry(0.995, 0.995, 0.995); // Separación sutil corregida
+        const matGrass = new THREE.MeshStandardMaterial({ color: 0x559944 });
+        const matWool = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        const entities = [];
 
-        const chunks = new Map();
-        const CHUNK_SIZE = 16;
-        const VIEW_DISTANCE = 3;
+        // --- GENERADOR DE FLORES DETALLADAS ---
+        function createFlower(x, y, z, type) {
+            const group = new THREE.Group();
+            const stemGeo = new THREE.BoxGeometry(0.1, 0.6, 0.1);
+            const stem = new THREE.Mesh(stemGeo, new THREE.MeshStandardMaterial({color: 0x225522}));
+            group.add(stem);
 
-        // --- GENERADOR DE MUNDO DINÁMICO ---
-        function getH(x, z) {
-            return Math.floor(Math.sin(x * 0.1) * 2 + Math.cos(z * 0.1) * 2 + 5);
-        }
-
-        function createTree(x, y, z) {
-            const tree = new THREE.Group();
-            // Tronco
+            const petalColor = type === 'rose' ? 0xff0000 : 0xffff00;
+            const petalGeo = new THREE.BoxGeometry(0.3, 0.1, 0.3);
             for(let i=0; i<4; i++) {
-                const log = new THREE.Mesh(geoBlock, matLog);
-                log.position.set(x, y + i, z);
-                tree.add(log);
+                const p = new THREE.Mesh(petalGeo, new THREE.MeshStandardMaterial({color: petalColor}));
+                p.position.y = 0.3;
+                p.rotation.y = (Math.PI / 2) * i;
+                group.add(p);
             }
-            // Hojas
-            for(let ox=-1; ox<=1; ox++) {
-                for(let oz=-1; oz<=1; oz++) {
-                    for(let oy=0; oy<2; oy++) {
-                        const leaf = new THREE.Mesh(geoBlock, matLeaves);
-                        leaf.position.set(x + ox, y + 4 + oy, z + oz);
-                        tree.add(leaf);
-                    }
-                }
-            }
-            scene.add(tree);
+            group.position.set(x, y + 0.3, z);
+            scene.add(group);
         }
 
-        function createChunk(cx, cz) {
-            const key = `${cx},${cz}`;
-            if(chunks.has(key)) return;
-            
-            const mesh = new THREE.InstancedMesh(geoBlock, matGrass, CHUNK_SIZE * CHUNK_SIZE);
-            const dummy = new THREE.Object3D();
-            let idx = 0;
-
-            for(let x=0; x<CHUNK_SIZE; x++) {
-                for(let z=0; z<CHUNK_SIZE; z++) {
-                    const wx = cx * CHUNK_SIZE + x;
-                    const wz = cz * CHUNK_SIZE + z;
-                    const wy = getH(wx, wz);
-                    
-                    dummy.position.set(wx, wy, wz);
-                    dummy.updateMatrix();
-                    mesh.setMatrixAt(idx++, dummy.matrix);
-
-                    // Probabilidad de Árboles (1%)
-                    if(Math.random() < 0.015) createTree(wx, wy + 1, wz);
-                    
-                    // Flores
-                    if(Math.random() < 0.05) {
-                        const flower = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), matFlower);
-                        flower.position.set(wx, wy + 0.8, wz);
-                        scene.add(flower);
-                    }
-                }
-            }
-            scene.add(mesh);
-            chunks.set(key, mesh);
+        // --- SISTEMA DE ANIMALES (OVEJAS) ---
+        function spawnAnimal(x, y, z) {
+            const body = new THREE.Group();
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 1), matWool);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), matWool);
+            head.position.set(0, 0.3, 0.6);
+            body.add(torso, head);
+            body.position.set(x, y + 1, z);
+            body.userData = { 
+                targetX: x, targetZ: z, 
+                timer: 0, 
+                speed: 0.02 + Math.random() * 0.03 
+            };
+            scene.add(body);
+            entities.push(body);
         }
 
-        // --- FÍSICA Y CONTROL ---
-        let velocity = new THREE.Vector3();
-        let move = { f: false, b: false, l: false, r: false };
+        // --- TERRENO ---
+        const getH = (x, z) => Math.floor(Math.sin(x*0.1)*3 + Math.cos(z*0.1)*2 + 5);
+        for(let x=-20; x<20; x++) {
+            for(let z=-20; z<20; z++) {
+                const y = getH(x, z);
+                const b = new THREE.Mesh(geoBlock, matGrass);
+                b.position.set(x, y, z);
+                scene.add(b);
+                if(Math.random() < 0.03) createFlower(x, y+0.5, z, Math.random() > 0.5 ? 'rose' : 'daisy');
+                if(Math.random() < 0.01) spawnAnimal(x, y, z);
+            }
+        }
+
+        // --- SOL ---
+        const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+        sun.position.set(50, 100, 50);
+        scene.add(sun, new THREE.AmbientLight(0xffffff, 0.4));
+
+        // --- FÍSICA ---
+        let velY = 0;
         let canJump = false;
+        const keys = {};
+        window.onkeydown = (e) => keys[e.code] = true;
+        window.onkeyup = (e) => keys[e.code] = false;
 
-        window.addEventListener('keydown', (e) => {
-            if(e.code === 'KeyW') move.f = true;
-            if(e.code === 'KeyS') move.b = true;
-            if(e.code === 'KeyA') move.l = true;
-            if(e.code === 'KeyD') move.r = true;
-            if(e.code === 'Space' && canJump) { velocity.y = 0.22; canJump = false; }
-        });
-        window.addEventListener('keyup', (e) => {
-            if(e.code === 'KeyW') move.f = false;
-            if(e.code === 'KeyS') move.b = false;
-            if(e.code === 'KeyA') move.l = false;
-            if(e.code === 'KeyD') move.r = false;
-        });
+        camera.position.set(0, 15, 0);
 
-        const sun = new THREE.DirectionalLight(0xffffff, 1);
-        sun.position.set(10, 20, 10);
-        scene.add(sun, new THREE.AmbientLight(0xffffff, 0.5));
-
-        camera.position.set(0, 10, 0);
+        function updateAI() {
+            entities.forEach(anim => {
+                anim.userData.timer--;
+                if(anim.userData.timer <= 0) {
+                    anim.userData.targetX = anim.position.x + (Math.random() - 0.5) * 10;
+                    anim.userData.targetZ = anim.position.z + (Math.random() - 0.5) * 10;
+                    anim.userData.timer = 100 + Math.random() * 200;
+                }
+                anim.position.x += (anim.userData.targetX - anim.position.x) * 0.01;
+                anim.position.z += (anim.userData.targetZ - anim.position.z) * 0.01;
+                anim.lookAt(anim.userData.targetX, anim.position.y, anim.userData.targetZ);
+            });
+        }
 
         function animate() {
             requestAnimationFrame(animate);
             if(controls.isLocked) {
-                const speed = 0.15; // VELOCIDAD AUMENTADA
-                if(move.f) controls.moveForward(speed);
-                if(move.b) controls.moveForward(-speed);
-                if(move.l) controls.moveRight(-speed);
-                if(move.r) controls.moveRight(speed);
+                const s = 0.2; // VELOCIDAD PRO
+                if(keys['KeyW']) controls.moveForward(s);
+                if(keys['KeyS']) controls.moveForward(-s);
+                if(keys['KeyA']) controls.moveRight(-s);
+                if(keys['KeyD']) controls.moveRight(s);
+                if(keys['Space'] && canJump) { velY = 0.25; canJump = false; }
 
-                velocity.y -= 0.01; // Gravedad
-                camera.position.y += velocity.y;
-
-                const gy = getH(Math.round(camera.position.x), Math.round(camera.position.z));
-                if(camera.position.y < gy + 1.8) {
-                    camera.position.y = gy + 1.8;
-                    velocity.y = 0;
+                velY -= 0.01;
+                camera.position.y += velY;
+                const ground = getH(Math.round(camera.position.x), Math.round(camera.position.z)) + 1.8;
+                if(camera.position.y < ground) {
+                    camera.position.y = ground;
+                    velY = 0;
                     canJump = true;
                 }
-
-                const pcx = Math.floor(camera.position.x / CHUNK_SIZE);
-                const pcz = Math.floor(camera.position.z / CHUNK_SIZE);
-                for(let x=-VIEW_DISTANCE; x<=VIEW_DISTANCE; x++) {
-                    for(let z=-VIEW_DISTANCE; z<=VIEW_DISTANCE; z++) {
-                        createChunk(pcx + x, pcz + z);
-                    }
-                }
+                updateAI();
             }
             renderer.render(scene, camera);
         }
