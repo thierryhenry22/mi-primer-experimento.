@@ -2,18 +2,60 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Voxel World Elite - Realism Update</title>
+    <title>HENRY CRAFT - Edición Oficial</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #87CEEB; }
-        #gui {
-            position: absolute; top: 10px; left: 10px;
-            background: rgba(0,0,0,0.8); color: #fff;
-            padding: 10px; font-family: sans-serif; border-left: 5px solid #00ff00;
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'VT323', monospace; }
+        
+        /* --- DISEÑO DEL MENÚ --- */
+        #menu {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.3); /* Oscurecer un poco el fondo 3D */
+            display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+            padding-left: 10%; box-sizing: border-box;
+            backdrop-filter: blur(2px);
+            transition: opacity 0.5s;
+            z-index: 10;
         }
+
+        h1 {
+            font-size: 120px; color: #fff; margin: 0;
+            text-shadow: 6px 6px 0px #3f3f3f, 8px 8px 0px #000;
+            line-height: 0.9; letter-spacing: -2px;
+        }
+        
+        h1 span { color: #e74c3c; } /* El "Henry" en rojo sutil */
+
+        .btn-container { margin-top: 40px; display: flex; flex-direction: column; gap: 20px; }
+
+        button {
+            font-family: 'VT323', monospace; font-size: 35px; color: #fff;
+            background: #7f8c8d; border: 4px solid #bdc3c7; border-bottom: 4px solid #2c3e50; border-right: 4px solid #2c3e50;
+            padding: 10px 60px; cursor: pointer; text-align: left; width: 300px;
+            text-shadow: 2px 2px #000; transition: transform 0.1s;
+        }
+
+        button:hover { background: #95a5a6; transform: scale(1.05); }
+        button:active { transform: translate(4px, 4px); border: 4px solid #2c3e50; }
+
+        #ui-game { display: none; position: absolute; top: 10px; left: 10px; color: white; font-size: 20px; text-shadow: 1px 1px 0 #000; }
+        
+        /* Ocultar menú al jugar */
+        .hidden { opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body>
-    <div id="gui"><b>MOVIMIENTO:</b> WASD | <b>SOL:</b> ACTIVO | <b>ANIMALES:</b> REALISTAS</div>
+
+    <div id="menu">
+        <h1>HENRY<br><span>CRAFT</span></h1>
+        <div class="btn-container">
+            <button id="btn-play">JUGAR</button>
+            <button id="btn-opt">OPCIONES</button>
+        </div>
+    </div>
+
+    <div id="ui-game">FPS: 60 | COORDS: 0, 0</div>
 
     <script type="importmap">
         {
@@ -28,122 +70,129 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-        // --- ESCENA Y CONFIGURACIÓN ---
+        // --- ESTADO DEL JUEGO ---
+        let gameStarted = false;
+
+        // --- ESCENA ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB);
+        scene.background = new THREE.Color(0x87CEEB); // Cielo azul
+        scene.fog = new THREE.Fog(0x87CEEB, 20, 60);
+
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true; // Sombra para realismo
+        renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        const controls = new PointerLockControls(camera, document.body);
-        document.body.addEventListener('click', () => controls.lock());
-
-        // --- SOL Y CIELO ---
-        const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-        sun.position.set(50, 100, 50);
+        // --- ILUMINACIÓN ---
+        const sun = new THREE.DirectionalLight(0xffffff, 1.3);
+        sun.position.set(50, 80, 30);
         sun.castShadow = true;
-        // Mejorar calidad de sombras
-        sun.shadow.mapSize.width = 1024;
-        sun.shadow.mapSize.height = 1024;
-        scene.add(sun, new THREE.AmbientLight(0xffffff, 0.4));
+        sun.shadow.mapSize.width = 2048;
+        sun.shadow.mapSize.height = 2048;
+        scene.add(sun, new THREE.AmbientLight(0xffffff, 0.5));
 
-        // Cubo visual para el Sol
-        const sunGeometry = new THREE.BoxGeometry(4, 4, 4);
-        const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFF00 });
-        const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
-        sunMesh.position.set(60, 80, -60);
-        scene.add(sunMesh);
+        // --- MATERIALES ---
+        const texLoader = new THREE.TextureLoader(); // Preparado para texturas futuras
+        const matGrass = new THREE.MeshStandardMaterial({ color: 0x5da130 });
+        const matDirt = new THREE.MeshStandardMaterial({ color: 0x8c603a });
+        
+        // MATERIALES DE HENRY
+        const matSkin = new THREE.MeshStandardMaterial({ color: 0xffcc99 }); // Piel
+        const matShirt = new THREE.MeshStandardMaterial({ color: 0xd63031 }); // Rojo intenso
+        const matPants = new THREE.MeshStandardMaterial({ color: 0x0984e3 }); // Azul eléctrico
+        const matShoes = new THREE.MeshStandardMaterial({ color: 0x2d3436 }); // Zapatos oscuros
 
-        // --- MATERIALES Y BLOQUES ---
-        const geoBlock = new THREE.BoxGeometry(0.99, 0.99, 0.99);
-        const matGrass = new THREE.MeshStandardMaterial({ color: 0x4d8c3a });
-        const matWool = new THREE.MeshStandardMaterial({ color: 0xffffff });
-        const matSkin = new THREE.MeshStandardMaterial({ color: 0xffdbac });
-        const matEye = new THREE.MeshStandardMaterial({ color: 0x000000 });
-
-        // --- SISTEMA DE OVEJAS REALISTAS ---
-        const entities = [];
-        function createRealisticSheep(x, y, z) {
-            const sheep = new THREE.Group();
-
-            // 1. Cuerpo (Rectangular, no un cubo)
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.8, 1.3), matWool);
-            body.position.y = 0.8;
-            body.castShadow = true;
-            sheep.add(body);
-
-            // 2. Cabeza con Ojos y Hocico
-            const headGroup = new THREE.Group();
-            const headBox = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), matWool);
-            
-            // Ojos (Mini cubos reales)
-            const eyeGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-            const eyeL = new THREE.Mesh(eyeGeo, matEye);
-            eyeL.position.set(0.15, 0.1, 0.31);
-            const eyeR = new THREE.Mesh(eyeGeo, matEye);
-            eyeR.position.set(-0.15, 0.1, 0.31);
-            
-            // Hocico
-            const snout = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.1), matSkin);
-            snout.position.set(0, -0.1, 0.31);
-
-            headGroup.add(headBox, eyeL, eyeR, snout);
-            headGroup.position.set(0, 1.1, 0.8);
-            sheep.add(headGroup);
-
-            // 3. Patas (4 unidades separadas)
-            const legGeo = new THREE.BoxGeometry(0.2, 0.6, 0.2);
-            const positions = [[0.25, 0.3, 0.4], [-0.25, 0.3, 0.4], [0.25, 0.3, -0.4], [-0.25, 0.3, -0.4]];
-            positions.forEach(pos => {
-                const leg = new THREE.Mesh(legGeo, matSkin);
-                leg.position.set(...pos);
-                sheep.add(leg);
-            });
-
-            sheep.position.set(x, y, z);
-            scene.add(sheep);
-            entities.push({ mesh: sheep, timer: 0, targetRot: 0 });
-        }
-
-        // --- GENERADOR DE CHUNKS (Tu código base) ---
-        const chunks = new Map();
-        const CHUNK_SIZE = 16;
-        const VIEW_DISTANCE = 2;
-
-        function getH(x, z) {
-            return Math.floor(Math.sin(x * 0.1) * 2 + Math.cos(z * 0.1) * 2 + 5);
-        }
-
-        function createChunk(cx, cz) {
-            const key = `${cx},${cz}`;
-            if(chunks.has(key)) return;
-            
+        // --- HENRY (PERSONAJE DEL MENÚ) ---
+        let henry;
+        function createHenry() {
             const group = new THREE.Group();
-            for(let x=0; x<CHUNK_SIZE; x++) {
-                for(let z=0; z<CHUNK_SIZE; z++) {
-                    const wx = cx * CHUNK_SIZE + x;
-                    const wz = cz * CHUNK_SIZE + z;
-                    const wy = getH(wx, wz);
-                    
-                    const block = new THREE.Mesh(geoBlock, matGrass);
-                    block.position.set(wx, wy, wz);
-                    block.receiveShadow = true;
-                    block.matrixAutoUpdate = false;
-                    block.updateMatrix();
-                    group.add(block);
 
-                    if(Math.random() < 0.005) createRealisticSheep(wx, wy + 1, wz);
-                }
-            }
+            // Cabeza
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), matSkin);
+            head.position.y = 1.65;
+            head.castShadow = true;
+
+            // Cuerpo (Camisa Roja)
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.25), matShirt);
+            body.position.y = 1.05;
+            body.castShadow = true;
+
+            // Brazo Izquierdo (Manga Roja + Piel)
+            const armL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.7, 0.2), matShirt);
+            armL.position.set(0.35, 1.05, 0);
+            const handL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), matSkin); // Mano
+            handL.position.y = -0.45;
+            armL.add(handL);
+
+            // Brazo Derecho
+            const armR = armL.clone();
+            armR.position.set(-0.35, 1.05, 0);
+
+            // Pierna Izquierda (Pantalón Azul)
+            const legL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.75, 0.22), matPants);
+            legL.position.set(0.13, 0.35, 0);
+            
+            // Pierna Derecha
+            const legR = legL.clone();
+            legR.position.set(-0.13, 0.35, 0);
+
+            group.add(head, body, armL, armR, legL, legR);
+            
+            // Posición para el menú (Lado derecho de la pantalla)
+            group.position.set(2, 6, 2); 
+            group.rotation.y = -0.5; // Mirando un poco hacia la cámara
+            
             scene.add(group);
-            chunks.set(key, group);
+            return group;
         }
+        henry = createHenry();
 
-        // --- FÍSICA Y ANIMACIÓN ---
+        // --- MUNDO (Chunks Simplificados) ---
+        const geoBlock = new THREE.BoxGeometry(1, 1, 1);
+        function getH(x, z) { return Math.floor(Math.sin(x*0.1)*2 + Math.cos(z*0.1)*2 + 5); }
+
+        const chunkGroup = new THREE.Group();
+        // Generamos un área pequeña para el menú/inicio
+        for(let x=-10; x<10; x++) {
+            for(let z=-10; z<10; z++) {
+                const y = getH(x, z);
+                const block = new THREE.Mesh(geoBlock, matGrass);
+                block.position.set(x, y, z);
+                block.receiveShadow = true;
+                chunkGroup.add(block);
+            }
+        }
+        scene.add(chunkGroup);
+
+        // --- CONTROLES Y JUGABILIDAD ---
+        const controls = new PointerLockControls(camera, document.body);
+        const uiGame = document.getElementById('ui-game');
+        const menu = document.getElementById('menu');
+
+        // Botón Jugar
+        document.getElementById('btn-play').addEventListener('click', () => {
+            menu.classList.add('hidden');
+            uiGame.style.display = 'block';
+            
+            // Ocultamos al "Henry del menú" porque ahora TÚ eres Henry
+            henry.visible = false;
+            
+            // Posicionar cámara para jugar
+            camera.position.set(0, 10, 0);
+            
+            controls.lock();
+            gameStarted = true;
+        });
+
+        controls.addEventListener('unlock', () => {
+            // Si sales del juego, vuelve el menú (opcional)
+            // menu.classList.remove('hidden'); 
+        });
+
+        // FÍSICA BÁSICA
         let velocity = new THREE.Vector3();
-        let move = { f: false, b: false, l: false, r: false };
+        let move = { f:false, b:false, l:false, r:false };
         let canJump = false;
 
         window.addEventListener('keydown', (e) => {
@@ -151,7 +200,7 @@
             if(e.code === 'KeyS') move.b = true;
             if(e.code === 'KeyA') move.l = true;
             if(e.code === 'KeyD') move.r = true;
-            if(e.code === 'Space' && canJump) { velocity.y = 0.25; canJump = false; }
+            if(e.code === 'Space' && canJump) { velocity.y = 0.22; canJump = false; }
         });
         window.addEventListener('keyup', (e) => {
             if(e.code === 'KeyW') move.f = false;
@@ -160,36 +209,47 @@
             if(e.code === 'KeyD') move.r = false;
         });
 
-        camera.position.set(0, 15, 0);
-
+        // --- BUCLE DE ANIMACIÓN ---
+        let time = 0;
         function animate() {
             requestAnimationFrame(animate);
-            if(controls.isLocked) {
-                const speed = 0.2; 
-                if(move.f) controls.moveForward(speed);
-                if(move.b) controls.moveForward(-speed);
-                if(move.l) controls.moveRight(-speed);
-                if(move.r) controls.moveRight(speed);
+            time += 0.01;
 
-                velocity.y -= 0.01;
-                camera.position.y += velocity.y;
+            if (!gameStarted) {
+                // *** MODO MENÚ ***
+                // La cámara flota suavemente mirando a Henry
+                camera.position.x = Math.sin(time * 0.5) * 4 + 2; 
+                camera.position.z = Math.cos(time * 0.5) * 4 + 6;
+                camera.position.y = 8 + Math.sin(time)*0.2;
+                camera.lookAt(2, 7, 2); // Mirar a Henry
+                
+                // Henry respira (animación sutil)
+                henry.position.y = 6 + Math.sin(time * 2) * 0.05;
+                
+            } else {
+                // *** MODO JUEGO ***
+                if(controls.isLocked) {
+                    const speed = 0.15;
+                    if(move.f) controls.moveForward(speed);
+                    if(move.b) controls.moveForward(-speed);
+                    if(move.l) controls.moveRight(-speed);
+                    if(move.r) controls.moveRight(speed);
 
-                const gy = getH(Math.round(camera.position.x), Math.round(camera.position.z));
-                if(camera.position.y < gy + 1.8) {
-                    camera.position.y = gy + 1.8;
-                    velocity.y = 0;
-                    canJump = true;
-                }
+                    velocity.y -= 0.01;
+                    camera.position.y += velocity.y;
 
-                // Generar chunks
-                const pcx = Math.floor(camera.position.x / CHUNK_SIZE);
-                const pcz = Math.floor(camera.position.z / CHUNK_SIZE);
-                for(let x=-VIEW_DISTANCE; x<=VIEW_DISTANCE; x++) {
-                    for(let z=-VIEW_DISTANCE; z<=VIEW_DISTANCE; z++) {
-                        createChunk(pcx + x, pcz + z);
+                    const gy = getH(Math.round(camera.position.x), Math.round(camera.position.z));
+                    if(camera.position.y < gy + 1.8) {
+                        camera.position.y = gy + 1.8;
+                        velocity.y = 0;
+                        canJump = true;
                     }
+                    
+                    // Actualizar UI coords
+                    uiGame.innerHTML = `HENRY CRAFT v1.0 | X: ${Math.round(camera.position.x)} Z: ${Math.round(camera.position.z)}`;
                 }
             }
+
             renderer.render(scene, camera);
         }
         animate();
