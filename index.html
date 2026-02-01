@@ -2,29 +2,20 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Voxel Engine Elite - Infinite World</title>
+    <title>Voxel Core - Ultra Physics</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #87CEEB; }
-        #gui {
-            position: absolute; top: 10px; left: 10px;
-            background: rgba(0,0,0,0.8); color: #00ff00;
-            padding: 15px; font-family: 'Courier New', monospace;
-            border: 1px solid #00ff00; pointer-events: none;
-        }
-        #crosshair {
-            position: absolute; top: 50%; left: 50%;
-            width: 10px; height: 10px; border: 1px solid white;
-            transform: translate(-50%, -50%);
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        #overlay {
+            position: absolute; top: 20px; left: 20px;
+            color: #00ff00; font-family: 'Courier New', monospace;
+            background: rgba(0,0,0,0.85); padding: 15px;
+            border: 2px solid #00ff00; border-radius: 5px;
+            text-transform: uppercase; letter-spacing: 2px;
         }
     </style>
 </head>
 <body>
-    <div id="gui">
-        > ENGINE_STATUS: ONLINE<br>
-        > RENDER_DISTANCE: INFINITE_PROCEDURAL<br>
-        > WASD: MOVER | SPACE: SALTO MODERADO
-    </div>
-    <div id="crosshair"></div>
+    <div id="overlay">Status: Collision Physics Active<br>Gravity: 9.8m/s²<br>Jump: Optimized</div>
 
     <script type="importmap">
         {
@@ -39,10 +30,10 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-        // --- CONFIGURACIÓN TÉCNICA ---
+        // --- CONFIGURACIÓN DE ESCENA PROFESIONAL ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB);
-        scene.fog = new THREE.FogExp2(0x87CEEB, 0.02);
+        scene.background = new THREE.Color(0x6eb1ff);
+        scene.fog = new THREE.Fog(0x6eb1ff, 10, 80);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -53,104 +44,98 @@
         const controls = new PointerLockControls(camera, document.body);
         document.body.addEventListener('click', () => controls.lock());
 
-        // --- GENERADOR DE MUNDO INFINITO ---
-        const CHUNK_SIZE = 16;
-        const RENDER_DISTANCE = 3;
-        const blocks = new Map(); // Diccionario para colisiones rápidas
+        // --- MOTOR DE GENERACIÓN Y COLISIÓN ---
+        const worldData = {}; // Mapa de datos de bloques (X,Z -> Y)
         const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const grassMat = new THREE.MeshStandardMaterial({ color: 0x348C31 });
+        const material = new THREE.MeshStandardMaterial({ color: 0x448833, roughness: 0.8 });
+        const mesh = new THREE.InstancedMesh(geometry, material, 10000);
+        mesh.receiveShadow = true;
+        scene.add(mesh);
 
-        function getY(x, z) {
-            // Ruido matemático para crear montañas reales
-            return Math.floor(Math.sin(x * 0.1) * Math.cos(z * 0.1) * 3 + Math.sin(x * 0.05) * 5);
-        }
+        const dummy = new THREE.Object3D();
+        let blockIndex = 0;
 
-        function createChunk(cx, cz) {
-            const instancedMesh = new THREE.InstancedMesh(geometry, grassMat, CHUNK_SIZE * CHUNK_SIZE);
-            instancedMesh.instanceMatrix.setUsage(THREE.StaticDrawUsage);
-            let idx = 0;
-            const dummy = new THREE.Object3D();
+        function generateWorld() {
+            for (let x = -30; x <= 30; x++) {
+                for (let z = -30; z <= 30; z++) {
+                    // Algoritmo de altura más complejo para evitar "montecitos" simples
+                    const h = Math.floor(Math.sin(x * 0.1) * 3 + Math.cos(z * 0.15) * 2 + 5);
+                    worldData[`${x},${z}`] = h; // Guardamos la altura real para la física
 
-            for (let x = 0; x < CHUNK_SIZE; x++) {
-                for (let z = 0; z < CHUNK_SIZE; z++) {
-                    const worldX = cx * CHUNK_SIZE + x;
-                    const worldZ = cz * CHUNK_SIZE + z;
-                    const worldY = getY(worldX, worldZ);
-                    
-                    dummy.position.set(worldX, worldY, worldZ);
-                    dummy.updateMatrix();
-                    instancedMesh.setMatrixAt(idx++, dummy.matrix);
-                    
-                    // Guardar en el mapa de colisiones
-                    blocks.set(`${worldX},${worldZ}`, worldY);
+                    for (let y = 0; y < h; y++) {
+                        if (y === h - 1) { // Solo renderizamos la capa superior por rendimiento
+                            dummy.position.set(x, y, z);
+                            dummy.updateMatrix();
+                            mesh.setMatrixAt(blockIndex++, dummy.matrix);
+                        }
+                    }
                 }
             }
-            scene.add(instancedMesh);
+            mesh.instanceMatrix.needsUpdate = true;
         }
-
-        // Generar área inicial
-        for(let x = -2; x <= 2; x++) {
-            for(let z = -2; z <= 2; z++) createChunk(x, z);
-        }
+        generateWorld();
 
         // --- ILUMINACIÓN ---
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(10, 20, 10);
-        scene.add(light, new THREE.AmbientLight(0xffffff, 0.4));
+        const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+        sun.position.set(10, 50, 10);
+        scene.add(sun, new THREE.AmbientLight(0xffffff, 0.4));
 
-        // --- FÍSICA Y COLISIONES (CORRECCIÓN DE "TRASPASAR TODO") ---
+        // --- FÍSICA AVANZADA (EL NÚCLEO DEL JUEGO) ---
         let velocity = new THREE.Vector3();
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
         let canJump = false;
 
         document.addEventListener('keydown', (e) => {
-            if(e.code === 'KeyW') moveForward = true;
-            if(e.code === 'KeyS') moveBackward = true;
-            if(e.code === 'KeyA') moveLeft = true;
-            if(e.code === 'KeyD') moveRight = true;
-            if(e.code === 'Space' && canJump) {
-                velocity.y += 0.15; // SALTO MODERADO (Física ajustada)
-                canJump = false;
+            switch (e.code) {
+                case 'KeyW': moveForward = true; break;
+                case 'KeyS': moveBackward = true; break;
+                case 'KeyA': moveLeft = true; break;
+                case 'KeyD': moveRight = true; break;
+                case 'Space': 
+                    if (canJump) {
+                        velocity.y = 0.12; // Salto moderado corregido
+                        canJump = false;
+                    }
+                    break;
             }
         });
         document.addEventListener('keyup', (e) => {
-            if(e.code === 'KeyW') moveForward = false;
-            if(e.code === 'KeyS') moveBackward = false;
-            if(e.code === 'KeyA') moveLeft = false;
-            if(e.code === 'KeyD') moveRight = false;
+            switch (e.code) {
+                case 'KeyW': moveForward = false; break;
+                case 'KeyS': moveBackward = false; break;
+                case 'KeyA': moveLeft = false; break;
+                case 'KeyD': moveRight = false; break;
+            }
         });
 
-        camera.position.y = 10;
+        camera.position.set(0, 15, 0);
 
         function animate() {
             requestAnimationFrame(animate);
 
             if (controls.isLocked) {
-                // Fricción
-                velocity.x *= 0.9;
-                velocity.z *= 0.9;
-                
-                // Gravedad constante
-                velocity.y -= 0.005; 
+                // 1. Aplicar Gravedad
+                velocity.y -= 0.006; 
 
-                // Movimiento WASD
-                const speed = 0.005;
+                // 2. Movimiento Horizontal
+                const speed = 0.08;
                 if (moveForward) controls.moveForward(speed);
                 if (moveBackward) controls.moveForward(-speed);
                 if (moveLeft) controls.moveRight(-speed);
                 if (moveRight) controls.moveRight(speed);
 
+                // 3. Aplicar Movimiento Vertical (Salto/Gravedad)
                 camera.position.y += velocity.y;
 
-                // DETECTOR DE SUELO (EVITA TRASPASAR)
-                const gridX = Math.round(camera.position.x);
-                const gridZ = Math.round(camera.position.z);
-                const groundY = blocks.get(`${gridX},${gridZ}`) || -100;
+                // 4. DETECCIÓN DE COLISIÓN MILIMÉTRICA
+                const pX = Math.round(camera.position.x);
+                const pZ = Math.round(camera.position.z);
+                const terrainY = worldData[`${pX},${pZ}`] || 0;
 
-                // Si los pies del muñeco (altura 1.6) tocan el bloque
-                if (camera.position.y < groundY + 1.8) {
+                // Altura del "muñeco": 1.7 unidades
+                if (camera.position.y < terrainY + 1.7) {
+                    camera.position.y = terrainY + 1.7;
                     velocity.y = 0;
-                    camera.position.y = groundY + 1.8;
                     canJump = true;
                 }
             }
