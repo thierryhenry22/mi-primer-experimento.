@@ -2,270 +2,146 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brainrot Blitz!</title>
+    <title>BRAINROT TSUNAMI - ESCAPE!</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            font-family: 'Arial Black', Gadget, sans-serif;
-            background: radial-gradient(circle at center, #1a1a1a, #000000); /* Fondo oscuro e intenso */
-            color: #fff;
-            cursor: url('https://i.imgur.com/Q2hD0rZ.png'), auto; /* Cursor de mano de meme */
-            user-select: none;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        #game-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            border: 5px solid #ff00ff; /* Borde de neón */
-            box-shadow: 0 0 30px #ff00ff;
-            background-size: cover;
-            background-position: center;
-            animation: glitchBg 10s infinite alternate; /* Fondo con efecto de glitch */
-        }
-
-        @keyframes glitchBg {
-            0% { background-image: url('https://i.imgur.com/G3P6G6K.jpeg'); } /* Fondo 1 */
-            33% { background-image: url('https://i.imgur.com/O6t6z4w.jpeg'); } /* Fondo 2 */
-            66% { background-image: url('https://i.imgur.com/P1b6hCj.jpeg'); } /* Fondo 3 */
-            100% { background-image: url('https://i.imgur.com/G3P6G6K.jpeg'); }
-        }
-
-        .brainrot-item {
-            position: absolute;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            pointer-events: auto; /* Permite hacer clic */
-            transform: scale(1) rotate(0deg);
-            transition: transform 0.1s ease-out; /* Animación de clic */
-        }
-
-        .brainrot-item:active {
-            transform: scale(0.9) rotate(5deg);
-        }
-
-        .target {
-            filter: drop-shadow(0 0 10px #00ff00); /* Resaltar targets */
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
+        #ui {
+            position: absolute; top: 20px; left: 20px; color: white;
+            font-size: 30px; font-weight: bold; text-shadow: 3px 3px 0 #ff00ff;
             z-index: 10;
         }
-
-        .distraction {
-            filter: drop-shadow(0 0 5px #ff0000); /* Resaltar distracciones */
-            z-index: 5;
-        }
-
-        #score-display, #timer-display, #message-display {
-            position: absolute;
-            font-size: 3em;
-            color: #00ff00; /* Verde neón para el HUD */
-            text-shadow: 0 0 15px #00ff00, 0 0 20px #00ff00;
-            z-index: 100;
-            pointer-events: none;
-            text-align: center;
-            width: 100%;
-            top: 10px;
-            animation: neonFlicker 1.5s infinite alternate;
-        }
-
-        #timer-display {
-            top: 100px;
-            color: #ff00ff; /* Rosa neón para el tiempo */
-            text-shadow: 0 0 15px #ff00ff, 0 0 20px #ff00ff;
-        }
-
-        #message-display {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 5em;
-            color: #ffff00; /* Amarillo brillante para mensajes */
-            text-shadow: 0 0 20px #ffff00;
-            display: none;
-        }
-
-        @keyframes neonFlicker {
-            0% { opacity: 1; }
-            50% { opacity: 0.8; }
-            100% { opacity: 1; }
-        }
-
-        /* Música de fondo */
-        #audio-player {
-            display: none; /* Oculta el reproductor, se controlará por JS */
+        #game-over {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: red; font-size: 80px; display: none; text-align: center;
+            background: rgba(0,0,0,0.8); padding: 50px; border: 5px solid #ff0000; z-index: 20;
         }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <div id="score-display">PUNTOS: 0</div>
-        <div id="timer-display">TIEMPO: 30</div>
-        <div id="message-display">¡COMIENZA!</div>
-    </div>
+    <div id="ui">ALTURA: <span id="alt">0</span>m | EL TSUNAMI SUBE...</div>
+    <div id="game-over">¡TE COMIÓ EL BRAINROT!<br><small style="font-size:30px; color:white">Recarga para reintentar</small></div>
 
-    <audio id="audio-player" loop autoplay>
-        <source src="https://assets.mixkit.co/sfx/preview/mixkit-sci-fi-game-over-1960.mp3" type="audio/mpeg"> Tu navegador no soporta el elemento de audio.
-    </audio>
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    </script>
 
-    <script>
-        const gameContainer = document.getElementById('game-container');
-        const scoreDisplay = document.getElementById('score-display');
-        const timerDisplay = document.getElementById('timer-display');
-        const messageDisplay = document.getElementById('message-display');
-        const audioPlayer = document.getElementById('audio-player');
+    <script type="module">
+        import * as THREE from 'three';
 
-        let score = 0;
-        let timeLeft = 30; // Segundos de juego
-        let gameInterval;
-        let itemSpawnInterval;
-        let gameRunning = false;
+        // --- CONFIGURACIÓN ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x111111);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-        // --- BIBLIOTECA DE MEMES (URLs de imágenes) ---
-        const memeImages = [
-            'https://i.imgur.com/1B9q90x.png', // Skibidi Toilet
-            'https://i.imgur.com/uFkS0vV.png', // Grimace Shake
-            'https://i.imgur.com/gK2g09n.png', // "Me when..."
-            'https://i.imgur.com/w2Y7JbX.png', // Sigma Male / Patrick Bateman
-            'https://i.imgur.com/sW2h0e7.png', // Ohio
-            'https://i.imgur.com/2Y5m4kO.png', // DaBaby Convertible
-            'https://i.imgur.com/0F9g770.png', // Wojak
-            'https://i.imgur.com/7iL6pYf.png', // Spongebob Meme
-            'https://i.imgur.com/Y3U72R7.png', // Quandale Dingle
-            'https://i.imgur.com/x5c9iR3.png', // Shrek
-            'https://i.imgur.com/qE4Cj7G.png', // Amogus
-            'https://i.imgur.com/mZ6P9oZ.png', // Pepe the Frog
-            'https://i.imgur.com/D4J8JjS.png', // Distraído
-            'https://i.imgur.com/9n9lJzP.png', // Patrick Star
-            'https://i.imgur.com/vHq4V9q.png', // Doge
-        ];
+        // --- LUCES ---
+        const light = new THREE.PointLight(0xff00ff, 2, 100);
+        light.position.set(0, 10, 0);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6), light);
 
-        const targetSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'); // Sonido de clic correcto
-        const missSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-negative-game-notification-2470.mp3'); // Sonido de clic incorrecto
-        const gameOverSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-over-2824.mp3'); // Sonido de fin de juego
+        // --- EL JUGADOR (Estilo Roblox) ---
+        const playerGeo = new THREE.BoxGeometry(1, 1, 1);
+        const playerMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+        const player = new THREE.Mesh(playerGeo, playerMat);
+        player.position.y = 5;
+        scene.add(player);
 
-        function startGame() {
-            score = 0;
-            timeLeft = 30;
-            scoreDisplay.textContent = 'PUNTOS: 0';
-            timerDisplay.textContent = 'TIEMPO: 30';
-            gameContainer.innerHTML = `<div id="score-display">PUNTOS: 0</div><div id="timer-display">TIEMPO: 30</div><div id="message-display">¡COMIENZA!</div>`;
-            
-            // Re-obtener los elementos que se sobrescribieron
-            scoreDisplay = document.getElementById('score-display');
-            timerDisplay = document.getElementById('timer-display');
-            messageDisplay = document.getElementById('message-display');
+        // --- EL TSUNAMI (Muro de memes) ---
+        const tsunamiGeo = new THREE.BoxGeometry(100, 1, 100);
+        const tsunamiMat = new THREE.MeshStandardMaterial({ 
+            color: 0x00ffff, transparent: true, opacity: 0.8, emissive: 0x00ffff, emissiveIntensity: 0.5 
+        });
+        const tsunami = new THREE.Mesh(tsunamiGeo, tsunamiMat);
+        tsunami.position.y = -5;
+        scene.add(tsunami);
 
-            messageDisplay.textContent = '¡COMIENZA!';
-            messageDisplay.style.display = 'block';
-            audioPlayer.play(); // Iniciar música
-
-            setTimeout(() => {
-                messageDisplay.style.display = 'none';
-                gameRunning = true;
-                gameInterval = setInterval(updateGame, 1000);
-                itemSpawnInterval = setInterval(spawnBrainrotItem, 300); // Generar elementos cada 0.3 segundos
-            }, 3000);
-        }
-
-        function spawnBrainrotItem() {
-            if (!gameRunning) return;
-
-            const item = document.createElement('div');
-            item.classList.add('brainrot-item');
-            
-            const randomImage = memeImages[Math.floor(Math.random() * memeImages.length)];
-            item.style.backgroundImage = `url('${randomImage}')`;
-
-            const size = Math.random() * 150 + 50; // Tamaño aleatorio entre 50px y 200px
-            item.style.width = `${size}px`;
-            item.style.height = `${size}px`;
-
-            const x = Math.random() * (window.innerWidth - size);
-            const y = Math.random() * (window.innerHeight - size);
-            item.style.left = `${x}px`;
-            item.style.top = `${y}px`;
-
-            // Decidir si es un target o una distracción
-            if (Math.random() < 0.6) { // 60% de probabilidad de ser un target
-                item.classList.add('target');
-                item.onclick = () => handleItemClick(item, true);
-            } else {
-                item.classList.add('distraction');
-                item.onclick = () => handleItemClick(item, false);
+        // --- GENERACIÓN DE OBBY (Plataformas) ---
+        const platforms = [];
+        const colors = [0xff00ff, 0x00ff00, 0xffff00, 0xff0000, 0x0000ff];
+        
+        function createObby() {
+            for (let i = 0; i < 100; i++) {
+                const platGeo = new THREE.BoxGeometry(4, 0.5, 4);
+                const platMat = new THREE.MeshStandardMaterial({ color: colors[i % colors.length] });
+                const plat = new THREE.Mesh(platGeo, platMat);
+                
+                plat.position.x = (Math.random() - 0.5) * 15;
+                plat.position.z = (Math.random() - 0.5) * 15;
+                plat.position.y = i * 3;
+                
+                scene.add(plat);
+                platforms.push(plat);
             }
+        }
+        createObby();
 
-            gameContainer.appendChild(item);
+        // --- CONTROLES ---
+        const keys = {};
+        window.onkeydown = (e) => keys[e.code] = true;
+        window.onkeyup = (e) => keys[e.code] = false;
 
-            // Eliminar el item después de un tiempo para evitar sobrecarga y hacerlos efímeros
-            const lifetime = Math.random() * 2000 + 1000; // Vive entre 1 y 3 segundos
-            setTimeout(() => {
-                if (item.parentNode === gameContainer) {
-                    gameContainer.removeChild(item);
+        let py = 0; // Velocidad vertical
+        let canJump = false;
+        let isDead = false;
+
+        function updatePlayer() {
+            if (isDead) return;
+
+            const speed = 0.15;
+            if (keys['KeyW']) player.position.z -= speed;
+            if (keys['KeyS']) player.position.z += speed;
+            if (keys['KeyA']) player.position.x -= speed;
+            if (keys['KeyD']) player.position.x += speed;
+
+            // Gravedad
+            py -= 0.01;
+            player.position.y += py;
+
+            // Colisión con plataformas
+            platforms.forEach(p => {
+                if (player.position.y >= p.position.y + 0.5 && 
+                    player.position.y <= p.position.y + 1 &&
+                    Math.abs(player.position.x - p.position.x) < 2.5 &&
+                    Math.abs(player.position.z - p.position.z) < 2.5) {
+                    
+                    player.position.y = p.position.y + 0.75;
+                    py = 0;
+                    canJump = true;
                 }
-            }, lifetime);
-        }
+            });
 
-        function handleItemClick(item, isTarget) {
-            if (!gameRunning) return;
-
-            if (isTarget) {
-                score += 10;
-                targetSound.play();
-                item.style.filter = 'brightness(200%) invert(100%)'; // Efecto visual de acierto
-            } else {
-                score = Math.max(0, score - 5); // Penalización por distracción
-                missSound.play();
-                item.style.filter = 'grayscale(100%) blur(5px)'; // Efecto visual de error
+            if (keys['Space'] && canJump) {
+                py = 0.25;
+                canJump = false;
             }
-            scoreDisplay.textContent = `PUNTOS: ${score}`;
-            
-            // Eliminar el item inmediatamente después del clic
-            if (item.parentNode === gameContainer) {
-                gameContainer.removeChild(item);
+
+            // Cámara sigue al jugador
+            camera.position.set(player.position.x, player.position.y + 5, player.position.z + 10);
+            camera.lookAt(player.position);
+
+            // Muerte por Tsunami
+            if (player.position.y < tsunami.position.y + 0.5) {
+                isDead = true;
+                document.getElementById('game-over').style.display = 'block';
             }
         }
 
-        function updateGame() {
-            if (!gameRunning) return;
+        // --- BUCLE PRINCIPAL ---
+        function animate() {
+            requestAnimationFrame(animate);
 
-            timeLeft--;
-            timerDisplay.textContent = `TIEMPO: ${timeLeft}`;
-
-            if (timeLeft <= 0) {
-                endGame();
+            if (!isDead) {
+                tsunami.position.y += 0.015; // Velocidad del tsunami
+                document.getElementById('alt').innerText = Math.floor(player.position.y);
+                updatePlayer();
             }
+
+            renderer.render(scene, camera);
         }
 
-        function endGame() {
-            gameRunning = false;
-            clearInterval(gameInterval);
-            clearInterval(itemSpawnInterval);
-            audioPlayer.pause();
-            gameOverSound.play();
-
-            messageDisplay.textContent = `¡FIN! Puntuación: ${score}`;
-            messageDisplay.style.display = 'block';
-
-            // Eliminar todos los ítems restantes
-            const items = gameContainer.querySelectorAll('.brainrot-item');
-            items.forEach(item => item.parentNode.removeChild(item));
-
-            setTimeout(() => {
-                // Reiniciar el juego después de unos segundos
-                messageDisplay.style.display = 'none';
-                startGame();
-            }, 5000); // 5 segundos para ver la puntuación final
-        }
-
-        // --- INICIO DEL JUEGO (Automático) ---
-        document.addEventListener('DOMContentLoaded', startGame);
+        animate();
     </script>
 </body>
 </html>
