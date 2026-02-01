@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neural Rider - Snow Edition Pro</title>
+    <title>Neural Rider - Extreme Snow</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
         #ui { 
-            position: absolute; top: 30px; width: 100%; text-align: center; 
-            color: #06b6d4; font-size: 2.5rem; font-weight: bold;
-            text-shadow: 0 0 20px #06b6d4; pointer-events: none;
+            position: absolute; top: 20px; width: 100%; text-align: center; 
+            color: #00f2ff; font-size: 2.5rem; font-weight: bold;
+            text-shadow: 0 0 15px #00f2ff; pointer-events: none; z-index: 10;
         }
     </style>
 </head>
@@ -20,107 +20,127 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // --- ESCENA Y RENDER ---
+        // 1. Escena y Motor
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050505);
-        scene.fog = new THREE.Fog(0x050505, 15, 60);
+        scene.background = new THREE.Color(0x0a0a0c);
+        scene.fog = new THREE.Fog(0x0a0a0c, 10, 80);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        // --- LUCES ---
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-        scene.add(ambientLight);
-        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        sunLight.position.set(5, 10, 7);
-        scene.add(sunLight);
+        // 2. Luces (Aseguran que nada se vea negro)
+        const light = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(light);
+        const directional = new THREE.DirectionalLight(0xffffff, 0.5);
+        directional.position.set(5, 10, 5);
+        scene.add(directional);
 
-        // --- CARRETERA ---
-        const roadGeo = new THREE.PlaneGeometry(10, 1000);
-        const roadMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
+        // 3. Carretera
+        const roadGeo = new THREE.BoxGeometry(12, 0.1, 1000);
+        const roadMat = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
         const road = new THREE.Mesh(roadGeo, roadMat);
-        road.rotation.x = -Math.PI / 2;
         scene.add(road);
 
-        // Línea central de la carretera
-        const lineGeo = new THREE.PlaneGeometry(0.2, 1000);
+        // Línea central
+        const lineGeo = new THREE.PlaneGeometry(0.3, 1000);
         const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         const line = new THREE.Mesh(lineGeo, lineMat);
         line.rotation.x = -Math.PI / 2;
-        line.position.y = 0.01;
+        line.position.y = 0.1;
         scene.add(line);
 
-        // --- NIEVE (SIN CUADRICULADO) ---
-        function createSnowSide(xPos) {
-            const snowGeo = new THREE.PlaneGeometry(50, 1000, 32, 32);
-            const pos = snowGeo.attributes.position.array;
-            for(let i = 0; i < pos.length; i+=3) {
-                pos[i+2] = Math.random() * 2; // Relieve suave
-            }
-            const snowMat = new THREE.MeshPhongMaterial({ color: 0xffffff, flatShining: true });
-            const snow = new THREE.Mesh(snowGeo, snowMat);
-            snow.rotation.x = -Math.PI / 2;
-            snow.position.set(xPos, -0.1, 0);
-            scene.add(snow);
-        }
-        createSnowSide(30);  // Derecha
-        createSnowSide(-30); // Izquierda
+        // 4. Nieve Lateral (Sólida, sin cuadriculado)
+        const snowGeo = new THREE.PlaneGeometry(100, 1000);
+        const snowMat = new THREE.MeshPhongMaterial({ color: 0xe0e0e0 });
+        
+        const snowL = new THREE.Mesh(snowGeo, snowMat);
+        snowL.rotation.x = -Math.PI / 2;
+        snowL.position.set(-56, -0.05, 0);
+        scene.add(snowL);
 
-        // --- ÁRBOLES ---
+        const snowR = snowL.clone();
+        snowR.position.x = 56;
+        scene.add(snowR);
+
+        // 5. Árboles con Nieve
         const trees = [];
-        function createTree(z) {
-            const treeGroup = new THREE.Group();
-            const trunkGeo = new THREE.CylinderGeometry(0.2, 0.2, 1);
-            const trunkMat = new THREE.MeshPhongMaterial({ color: 0x4d2600 });
-            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-            
-            const leavesGeo = new THREE.ConeGeometry(1.2, 3, 8);
-            const leavesMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
-            const leaves = new THREE.Mesh(leavesGeo, leavesMat);
-            leaves.position.y = 2;
-
-            treeGroup.add(trunk);
-            treeGroup.add(leaves);
-            treeGroup.position.set(Math.random() > 0.5 ? 8 : -8, 0.5, z);
-            scene.add(treeGroup);
-            trees.push(treeGroup);
+        function addTree(z) {
+            const group = new THREE.Group();
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.5), new THREE.MeshPhongMaterial({color: 0x3d2b1f}));
+            const leaves = new THREE.Mesh(new THREE.ConeGeometry(1.5, 4, 6), new THREE.MeshPhongMaterial({color: 0xffffff}));
+            leaves.position.y = 2.5;
+            group.add(trunk);
+            group.add(leaves);
+            group.position.set(Math.random() > 0.5 ? 10 : -10, 0, z);
+            scene.add(group);
+            trees.push(group);
         }
+        for(let i = 0; i > -300; i -= 20) addTree(i);
 
-        for(let i = 0; i > -200; i -= 15) createTree(i);
-
-        // --- MOTO ---
+        // 6. La Moto (Diseño Pro)
         const bike = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.5, 2), new THREE.MeshPhongMaterial({ color: 0x111111 }));
-        const neon = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.1, 1.8), new THREE.MeshBasicMaterial({ color: 0x8b5cf6 }));
-        neon.position.y = 0.1;
-        bike.add(body);
-        bike.add(neon);
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.6, 2.2), new THREE.MeshPhongMaterial({color: 0x000000}));
+        const glow = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.1, 1.8), new THREE.MeshBasicMaterial({color: 0x00f2ff}));
+        glow.position.y = 0.2;
+        bike.add(body, glow);
         scene.add(bike);
-        bike.position.y = 0.5;
+        bike.position.y = 0.6;
 
-        // --- CÁMARA ---
-        camera.position.set(0, 3, 7);
+        camera.position.set(0, 4, 8);
 
-        // --- CONTROLES Y ANIMACIÓN ---
+        // 7. Controles
         let keys = {};
-        window.addEventListener('keydown', (e) => keys[e.key] = true);
-        window.addEventListener('keyup', (e) => keys[e.key] = false);
+        window.onkeydown = (e) => keys[e.key] = true;
+        window.onkeyup = (e) => keys[e.key] = false;
 
-        let velocity = 0;
+        let vel = 0;
+
         function animate() {
             requestAnimationFrame(animate);
 
-            if(keys["ArrowUp"]) velocity += 0.005;
-            else velocity *= 0.98;
-            if(velocity > 0.8) velocity = 0.8;
+            if(keys["ArrowUp"]) vel += 0.01;
+            else vel *= 0.96;
+            if(vel > 1) vel = 1;
 
-            if(keys["ArrowLeft"]) bike.position.x -= 0.1;
-            if(keys["ArrowRight"]) bike.position.x += 0.1;
+            if(keys["ArrowLeft"] && bike.position.x > -5) bike.position.x -= 0.15;
+            if(keys["ArrowRight"] && bike.position.x < 5) bike.position.x += 0.15;
 
-            // Mover mundo
-            road.position.z += velocity * 50;
-            line.position.z += velocity * 50;
-            if(road
+            // Movimiento del mundo
+            const moveStep = vel * 60;
+            road.position.z += moveStep;
+            line.position.z += moveStep;
+            snowL.position.z += moveStep;
+            snowR.position.z += moveStep;
+
+            if(road.position.z > 200) {
+                road.position.z = 0;
+                line.position.z = 0;
+                snowL.position.z = 0;
+                snowR.position.z = 0;
+            }
+
+            trees.forEach(t => {
+                t.position.z += moveStep;
+                if(t.position.z > 20) t.position.z = -280;
+            });
+
+            // Cámara sigue a la moto
+            camera.position.x += (bike.position.x - camera.position.x) * 0.1;
+            camera.lookAt(bike.position.x, 1, -10);
+
+            document.getElementById('speed').innerText = Math.floor(vel * 280);
+            renderer.render(scene, camera);
+        }
+
+        window.onresize = () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        };
+
+        animate();
+    </script>
+</body>
+</html>
