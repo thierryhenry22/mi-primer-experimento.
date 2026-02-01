@@ -2,139 +2,136 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>IA 3D Runner - Proto</title>
+    <title>Motorcycle Hill Rider</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
-        #ui {
-            position: absolute;
-            top: 20px;
-            width: 100%;
-            text-align: center;
-            color: #06b6d4;
-            font-size: 24px;
-            text-shadow: 0 0 10px #06b6d4;
-            pointer-events: none;
-        }
-        #instructions {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            text-align: center;
-            color: white;
-            opacity: 0.6;
-        }
+        body { margin: 0; background: #0f172a; overflow: hidden; font-family: sans-serif; }
+        #ui { position: absolute; top: 20px; left: 20px; color: white; font-size: 24px; pointer-events: none; }
+        canvas { display: block; background: linear-gradient(#0ea5e9, #38bdf8); }
+        .controls { position: absolute; bottom: 20px; width: 100%; text-align: center; color: white; opacity: 0.7; }
     </style>
 </head>
 <body>
 
-    <div id="ui">Puntos: <span id="score">0</span></div>
-    <div id="instructions">Usa las Flechas Izquierda/Derecha para esquivar</div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <div id="ui">Distancia: <span id="dist">0</span>m</div>
+    <div class="controls">Usa Flecha ARRIBA para Acelerar | IZQ/DER para Inclinar</div>
+    <canvas id="gameCanvas"></canvas>
 
     <script>
-        // 1. Configuración de la Escena
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const distElement = document.getElementById("dist");
 
-        // 2. Iluminación
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(0, 5, 5).setLength(10);
-        scene.add(light);
-        scene.add(new THREE.AmbientLight(0x404040));
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        // 3. El Jugador (Cubo Neon)
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshPhongMaterial({ color: 0x8b5cf6, emissive: 0x2e1065 });
-        const player = new THREE.Mesh(geometry, material);
-        scene.add(player);
+        // --- CONFIGURACIÓN ---
+        let bike = {
+            x: 100,
+            y: 0,
+            vY: 0,
+            rot: 0,
+            vRot: 0,
+            speed: 0
+        };
 
-        // 4. El Suelo (Pista)
-        const planeGeo = new THREE.PlaneGeometry(10, 1000);
-        const planeMat = new THREE.MeshPhongMaterial({ color: 0x0f172a });
-        const road = new THREE.Mesh(planeGeo, planeMat);
-        road.rotation.x = -Math.PI / 2;
-        road.position.z = -490;
-        scene.add(road);
+        let terrain = [];
+        let offset = 0;
+        const gravity = 0.15;
 
-        camera.position.z = 5;
-        camera.position.y = 2;
-
-        // 5. Obstáculos
-        let obstacles = [];
-        function createObstacle() {
-            const obsGeo = new THREE.BoxGeometry(1, 1, 1);
-            const obsMat = new THREE.MeshPhongMaterial({ color: 0x06b6d4 });
-            const obs = new THREE.Mesh(obsGeo, obsMat);
-            obs.position.z = -50;
-            obs.position.x = (Math.random() - 0.5) * 8;
-            scene.add(obs);
-            obstacles.push(obs);
+        // Generar terreno inicial usando ondas seno
+        for (let i = 0; i < 2000; i++) {
+            terrain.push(Math.sin(i * 0.05) * 50 + Math.sin(i * 0.01) * 100 + canvas.height / 1.5);
         }
 
-        // 6. Controles
-        let moveLeft = false;
-        let moveRight = false;
-        window.addEventListener('keydown', (e) => {
-            if(e.key === "ArrowLeft") moveLeft = true;
-            if(e.key === "ArrowRight") moveRight = true;
-        });
-        window.addEventListener('keyup', (e) => {
-            if(e.key === "ArrowLeft") moveLeft = false;
-            if(e.key === "ArrowRight") moveRight = false;
-        });
+        // --- CONTROLES ---
+        let keys = {};
+        window.onkeydown = (e) => keys[e.key] = true;
+        window.onkeyup = (e) => keys[e.key] = false;
 
-        // 7. Lógica del Juego (Game Loop)
-        let score = 0;
-        let speed = 0.2;
+        function update() {
+            // Acelerar
+            if (keys["ArrowUp"]) bike.speed += 0.2;
+            else bike.speed *= 0.98; // Fricción
+            
+            if (bike.speed > 8) bike.speed = 8;
 
-        function animate() {
-            requestAnimationFrame(animate);
+            // Inclinación
+            if (keys["ArrowLeft"]) bike.vRot -= 0.01;
+            if (keys["ArrowRight"]) bike.vRot += 0.01;
 
-            // Movimiento del jugador
-            if(moveLeft && player.position.x > -4) player.position.x -= 0.1;
-            if(moveRight && player.position.x < 4) player.position.x += 0.1;
+            offset += bike.speed;
+            
+            // Física de la moto
+            let currentX = Math.floor(bike.x + offset);
+            let groundY = terrain[currentX % terrain.length];
 
-            // Generar obstáculos aleatorios
-            if(Math.random() < 0.05) createObstacle();
+            if (bike.y < groundY - 20) {
+                bike.vY += gravity; // Caída libre
+            } else {
+                // Al tocar el suelo, seguir la pendiente
+                let nextY = terrain[(currentX + 1) % terrain.length];
+                let angle = Math.atan2(nextY - groundY, 1);
+                
+                bike.y = groundY - 20;
+                bike.vY = 0;
+                
+                // Alineación automática con el suelo
+                bike.rot += (angle - bike.rot) * 0.1;
+            }
 
-            // Mover y limpiar obstáculos
-            obstacles.forEach((obs, index) => {
-                obs.position.z += speed;
+            bike.y += bike.vY;
+            bike.rot += bike.vRot;
+            bike.vRot *= 0.9; // Fricción de rotación
 
-                // Detectar Colisión
-                if(obs.position.z > 0 && obs.position.z < 1) {
-                    const dist = Math.abs(obs.position.x - player.position.x);
-                    if(dist < 1) {
-                        alert("¡COLISIÓN! Puntos: " + Math.floor(score));
-                        location.reload();
-                    }
-                }
+            // Actualizar UI
+            distElement.innerText = Math.floor(offset / 10);
 
-                if(obs.position.z > 10) {
-                    scene.remove(obs);
-                    obstacles.splice(index, 1);
-                }
-            });
-
-            score += 0.1;
-            document.getElementById('score').innerText = Math.floor(score);
-            speed += 0.0001; // El juego se vuelve más rápido
-
-            renderer.render(scene, camera);
+            // Perder si se voltea demasiado
+            if (Math.abs(bike.rot) > Math.PI / 1.5) {
+                alert("¡Te accidentaste! Distancia: " + Math.floor(offset/10) + "m");
+                location.reload();
+            }
         }
 
-        animate();
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Ajustar ventana
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+            // Dibujar Terreno
+            ctx.fillStyle = "#16a34a";
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            for (let i = 0; i < canvas.width; i++) {
+                ctx.lineTo(i, terrain[Math.floor(i + offset) % terrain.length]);
+            }
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.fill();
+
+            // Dibujar Moto (Representada por un cuerpo y dos ruedas)
+            ctx.save();
+            ctx.translate(bike.x, bike.y);
+            ctx.rotate(bike.rot);
+
+            // Cuerpo de la moto (Color Pro)
+            ctx.fillStyle = "#8b5cf6";
+            ctx.fillRect(-20, -10, 40, 10);
+            ctx.fillStyle = "white"; // Casco/Piloto
+            ctx.fillRect(-5, -25, 15, 15);
+
+            // Ruedas
+            ctx.fillStyle = "#333";
+            ctx.beginPath(); ctx.arc(-15, 5, 8, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(15, 5, 8, 0, Math.PI * 2); ctx.fill();
+
+            ctx.restore();
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
     </script>
 </body>
 </html>
