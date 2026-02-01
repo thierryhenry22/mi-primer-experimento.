@@ -2,16 +2,18 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>VOXEL ENGINE PRO v1.0</title>
+    <title>Voxel World Elite - Life Update</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
-        #crosshair { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; border: 2px solid white; transform: translate(-50%, -50%); mix-blend-mode: difference; }
-        #ui { position: absolute; top: 10px; left: 10px; color: #0f0; background: rgba(0,0,0,0.7); padding: 10px; border: 1px solid #0f0; }
+        body { margin: 0; overflow: hidden; background-color: #87CEEB; }
+        #gui {
+            position: absolute; top: 10px; left: 10px;
+            background: rgba(0,0,0,0.8); color: #fff;
+            padding: 10px; font-family: sans-serif; border-left: 5px solid #00ff00;
+        }
     </style>
 </head>
 <body>
-    <div id="ui">MODO: DESARROLLADOR ELITE | FISICAS: ON | ENTIDADES: IA</div>
-    <div id="crosshair"></div>
+    <div id="gui"><b>MOVIMIENTO:</b> WASD | <b>VELOCIDAD:</b> MÁXIMA | <b>SALTO:</b> POTENCIADO</div>
 
     <script type="importmap">
         {
@@ -26,155 +28,139 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-        // --- GENERADOR DE TEXTURAS PROFESIONAL ---
-        function getTexture(type) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 16; canvas.height = 16;
-            const ctx = canvas.getContext('2d');
-            
-            if(type === 'grass') {
-                ctx.fillStyle = '#4d8c3a'; ctx.fillRect(0,0,16,16);
-                for(let i=0; i<40; i++) {
-                    ctx.fillStyle = `rgba(0,0,0,${Math.random()*0.2})`;
-                    ctx.fillRect(Math.random()*16, Math.random()*16, 1, 1);
-                }
-            } else if(type === 'sheep_face') {
-                ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,16,16);
-                ctx.fillStyle = '#000'; ctx.fillRect(3, 4, 2, 2); ctx.fillRect(11, 4, 2, 2); // Ojos pro
-                ctx.fillStyle = '#ffbaba'; ctx.fillRect(6, 8, 4, 3); // Nariz
-            }
-            
-            const tex = new THREE.CanvasTexture(canvas);
-            tex.magFilter = THREE.NearestFilter; // Píxel perfecto
-            tex.minFilter = THREE.NearestFilter;
-            return tex;
-        }
-
-        // --- ESCENA Y RENDER ---
+        // --- CORE ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87CEEB);
-        scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
-
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: false });
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
         const controls = new PointerLockControls(camera, document.body);
         document.body.addEventListener('click', () => controls.lock());
 
-        // --- ILUMINACIÓN DINÁMICA ---
-        const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-        sun.position.set(50, 100, 50);
-        sun.castShadow = true;
-        sun.shadow.mapSize.width = 2048;
-        sun.shadow.mapSize.height = 2048;
+        // --- RECURSOS ---
+        const geoBlock = new THREE.BoxGeometry(0.98, 0.98, 0.98); // Separación sutil
+        const matGrass = new THREE.MeshStandardMaterial({ color: 0x4d8c3a });
+        const matLog = new THREE.MeshStandardMaterial({ color: 0x5d4037 });
+        const matLeaves = new THREE.MeshStandardMaterial({ color: 0x2e7d32 });
+        const matFlower = new THREE.MeshStandardMaterial({ color: 0xff4081 });
+
+        const chunks = new Map();
+        const CHUNK_SIZE = 16;
+        const VIEW_DISTANCE = 3;
+
+        // --- GENERADOR DE MUNDO DINÁMICO ---
+        function getH(x, z) {
+            return Math.floor(Math.sin(x * 0.1) * 2 + Math.cos(z * 0.1) * 2 + 5);
+        }
+
+        function createTree(x, y, z) {
+            const tree = new THREE.Group();
+            // Tronco
+            for(let i=0; i<4; i++) {
+                const log = new THREE.Mesh(geoBlock, matLog);
+                log.position.set(x, y + i, z);
+                tree.add(log);
+            }
+            // Hojas
+            for(let ox=-1; ox<=1; ox++) {
+                for(let oz=-1; oz<=1; oz++) {
+                    for(let oy=0; oy<2; oy++) {
+                        const leaf = new THREE.Mesh(geoBlock, matLeaves);
+                        leaf.position.set(x + ox, y + 4 + oy, z + oz);
+                        tree.add(leaf);
+                    }
+                }
+            }
+            scene.add(tree);
+        }
+
+        function createChunk(cx, cz) {
+            const key = `${cx},${cz}`;
+            if(chunks.has(key)) return;
+            
+            const mesh = new THREE.InstancedMesh(geoBlock, matGrass, CHUNK_SIZE * CHUNK_SIZE);
+            const dummy = new THREE.Object3D();
+            let idx = 0;
+
+            for(let x=0; x<CHUNK_SIZE; x++) {
+                for(let z=0; z<CHUNK_SIZE; z++) {
+                    const wx = cx * CHUNK_SIZE + x;
+                    const wz = cz * CHUNK_SIZE + z;
+                    const wy = getH(wx, wz);
+                    
+                    dummy.position.set(wx, wy, wz);
+                    dummy.updateMatrix();
+                    mesh.setMatrixAt(idx++, dummy.matrix);
+
+                    // Probabilidad de Árboles (1%)
+                    if(Math.random() < 0.015) createTree(wx, wy + 1, wz);
+                    
+                    // Flores
+                    if(Math.random() < 0.05) {
+                        const flower = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), matFlower);
+                        flower.position.set(wx, wy + 0.8, wz);
+                        scene.add(flower);
+                    }
+                }
+            }
+            scene.add(mesh);
+            chunks.set(key, mesh);
+        }
+
+        // --- FÍSICA Y CONTROL ---
+        let velocity = new THREE.Vector3();
+        let move = { f: false, b: false, l: false, r: false };
+        let canJump = false;
+
+        window.addEventListener('keydown', (e) => {
+            if(e.code === 'KeyW') move.f = true;
+            if(e.code === 'KeyS') move.b = true;
+            if(e.code === 'KeyA') move.l = true;
+            if(e.code === 'KeyD') move.r = true;
+            if(e.code === 'Space' && canJump) { velocity.y = 0.22; canJump = false; }
+        });
+        window.addEventListener('keyup', (e) => {
+            if(e.code === 'KeyW') move.f = false;
+            if(e.code === 'KeyS') move.b = false;
+            if(e.code === 'KeyA') move.l = false;
+            if(e.code === 'KeyD') move.r = false;
+        });
+
+        const sun = new THREE.DirectionalLight(0xffffff, 1);
+        sun.position.set(10, 20, 10);
         scene.add(sun, new THREE.AmbientLight(0xffffff, 0.5));
 
-        // --- GENERADOR DE OVEJAS (REALISTA) ---
-        const entities = [];
-        function createSheep(x, y, z) {
-            const group = new THREE.Group();
-            const matWhite = new THREE.MeshStandardMaterial({map: getTexture('grass')}); // Reutilizo ruido blanco
-            matWhite.map.colorSpace = THREE.SRGBColorSpace;
-
-            // Cuerpo
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.7, 1.2), matWhite);
-            body.position.y = 0.6;
-            body.castShadow = true;
-            
-            // Cabeza (SOLO LA CARA TIENE TEXTURA DE OJOS)
-            const faceMat = new THREE.MeshStandardMaterial({map: getTexture('sheep_face')});
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), [
-                matWhite, matWhite, matWhite, matWhite, faceMat, matWhite
-            ]);
-            head.position.set(0, 0.9, 0.7);
-            
-            // Patas
-            const legGeo = new THREE.BoxGeometry(0.15, 0.5, 0.15);
-            for(let i=0; i<4; i++) {
-                const leg = new THREE.Mesh(legGeo, new THREE.MeshStandardMaterial({color: 0xffdbac}));
-                leg.position.set(i<2?0.25:-0.25, 0.25, i%2?0.4:-0.4);
-                group.add(leg);
-            }
-
-            group.add(body, head);
-            group.position.set(x, y, z);
-            scene.add(group);
-            entities.push({ mesh: group, timer: 0, vx: 0, vz: 0 });
-        }
-
-        // --- TERRENO ---
-        const worldSize = 30;
-        const grassMat = new THREE.MeshStandardMaterial({ map: getTexture('grass') });
-        const getH = (x, z) => Math.floor(Math.sin(x*0.1)*3 + Math.cos(z*0.1)*2 + 5);
-
-        for(let x=-worldSize; x<worldSize; x++) {
-            for(let z=-worldSize; z<worldSize; z++) {
-                const y = getH(x, z);
-                const block = new THREE.Mesh(new THREE.BoxGeometry(0.99, 0.99, 0.99), grassMat);
-                block.position.set(x, y, z);
-                block.receiveShadow = true;
-                scene.add(block);
-                if(Math.random() < 0.005) createSheep(x, y+1, z);
-            }
-        }
-
-        // --- MOVIMIENTO PROFESIONAL ---
-        let velocity = new THREE.Vector3();
-        let direction = new THREE.Vector3();
-        const keys = {};
-        window.onkeydown = (e) => keys[e.code] = true;
-        window.onkeyup = (e) => keys[e.code] = false;
-
-        camera.position.set(0, 20, 10);
-
-        function updatePhysics() {
-            if (!controls.isLocked) return;
-
-            const speed = 0.18; 
-            direction.z = Number(keys['KeyW']) - Number(keys['KeyS']);
-            direction.x = Number(keys['KeyD']) - Number(keys['KeyA']);
-            direction.normalize();
-
-            if (keys['KeyW'] || keys['KeyS']) velocity.z -= direction.z * speed;
-            if (keys['KeyA'] || keys['KeyD']) velocity.x -= direction.x * speed;
-
-            controls.moveRight(-velocity.x);
-            controls.moveForward(-velocity.z);
-            velocity.multiplyScalar(0.85); // Fricción
-
-            // Gravedad y Salto
-            velocity.y -= 0.012; 
-            camera.position.y += velocity.y;
-
-            const ground = getH(Math.round(camera.position.x), Math.round(camera.position.z)) + 1.8;
-            if (camera.position.y < ground) {
-                camera.position.y = ground;
-                velocity.y = 0;
-                if (keys['Space']) velocity.y = 0.25;
-            }
-        }
+        camera.position.set(0, 10, 0);
 
         function animate() {
             requestAnimationFrame(animate);
-            updatePhysics();
-            
-            // IA Ovejas
-            entities.forEach(e => {
-                e.timer--;
-                if(e.timer <= 0) {
-                    e.vx = (Math.random()-0.5)*0.05;
-                    e.vz = (Math.random()-0.5)*0.05;
-                    e.timer = 100 + Math.random()*200;
-                }
-                e.mesh.position.x += e.vx;
-                e.mesh.position.z += e.vz;
-                if(Math.abs(e.vx) > 0) e.mesh.lookAt(e.mesh.position.x + e.vx*10, e.mesh.position.y, e.mesh.position.z + e.vz*10);
-            });
+            if(controls.isLocked) {
+                const speed = 0.15; // VELOCIDAD AUMENTADA
+                if(move.f) controls.moveForward(speed);
+                if(move.b) controls.moveForward(-speed);
+                if(move.l) controls.moveRight(-speed);
+                if(move.r) controls.moveRight(speed);
 
+                velocity.y -= 0.01; // Gravedad
+                camera.position.y += velocity.y;
+
+                const gy = getH(Math.round(camera.position.x), Math.round(camera.position.z));
+                if(camera.position.y < gy + 1.8) {
+                    camera.position.y = gy + 1.8;
+                    velocity.y = 0;
+                    canJump = true;
+                }
+
+                const pcx = Math.floor(camera.position.x / CHUNK_SIZE);
+                const pcz = Math.floor(camera.position.z / CHUNK_SIZE);
+                for(let x=-VIEW_DISTANCE; x<=VIEW_DISTANCE; x++) {
+                    for(let z=-VIEW_DISTANCE; z<=VIEW_DISTANCE; z++) {
+                        createChunk(pcx + x, pcz + z);
+                    }
+                }
+            }
             renderer.render(scene, camera);
         }
         animate();
