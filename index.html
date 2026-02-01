@@ -2,14 +2,17 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Voxel Engine Ultra - Professional Grade</title>
+    <title>VOXEL ENGINE PRO v1.0</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; }
-        #crosshair { position: absolute; top: 50%; left: 50%; width: 15px; height: 15px; border: 2px solid #fff; transform: translate(-50%, -50%); mix-blend-mode: difference; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
+        #crosshair { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; border: 2px solid white; transform: translate(-50%, -50%); mix-blend-mode: difference; }
+        #ui { position: absolute; top: 10px; left: 10px; color: #0f0; background: rgba(0,0,0,0.7); padding: 10px; border: 1px solid #0f0; }
     </style>
 </head>
 <body>
+    <div id="ui">MODO: DESARROLLADOR ELITE | FISICAS: ON | ENTIDADES: IA</div>
     <div id="crosshair"></div>
+
     <script type="importmap">
         {
             "imports": {
@@ -23,91 +26,155 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-        // --- GENERADOR DE TEXTURAS PROFESIONAL (Simula Pixel Art) ---
-        function createPixelTexture(colorBase, noise) {
+        // --- GENERADOR DE TEXTURAS PROFESIONAL ---
+        function getTexture(type) {
             const canvas = document.createElement('canvas');
             canvas.width = 16; canvas.height = 16;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = colorBase;
-            ctx.fillRect(0, 0, 16, 16);
-            for(let i=0; i<32; i++) {
-                ctx.fillStyle = `rgba(0,0,0,${Math.random() * noise})`;
-                ctx.fillRect(Math.floor(Math.random()*16), Math.floor(Math.random()*16), 1, 1);
+            
+            if(type === 'grass') {
+                ctx.fillStyle = '#4d8c3a'; ctx.fillRect(0,0,16,16);
+                for(let i=0; i<40; i++) {
+                    ctx.fillStyle = `rgba(0,0,0,${Math.random()*0.2})`;
+                    ctx.fillRect(Math.random()*16, Math.random()*16, 1, 1);
+                }
+            } else if(type === 'sheep_face') {
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,16,16);
+                ctx.fillStyle = '#000'; ctx.fillRect(3, 4, 2, 2); ctx.fillRect(11, 4, 2, 2); // Ojos pro
+                ctx.fillStyle = '#ffbaba'; ctx.fillRect(6, 8, 4, 3); // Nariz
             }
+            
             const tex = new THREE.CanvasTexture(canvas);
-            tex.magFilter = THREE.NearestFilter; // Esto da el look "Minecraft" nítido
+            tex.magFilter = THREE.NearestFilter; // Píxel perfecto
+            tex.minFilter = THREE.NearestFilter;
             return tex;
         }
 
-        const grassTex = createPixelTexture('#5d994d', 0.2);
-        const dirtTex = createPixelTexture('#8b5a2b', 0.3);
-        const woolTex = createPixelTexture('#ffffff', 0.1);
-
-        // --- MOTOR ---
+        // --- ESCENA Y RENDER ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x7fb2f0);
+        scene.background = new THREE.Color(0x87CEEB);
+        scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
+
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: false }); // Antialias false para look retro-pro
+        const renderer = new THREE.WebGLRenderer({ antialias: false });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
         const controls = new PointerLockControls(camera, document.body);
         document.body.addEventListener('click', () => controls.lock());
 
-        // --- OVEJA PROFESIONAL (Con Textura de Cara) ---
-        function createSheepPro(x, y, z) {
-            const group = new THREE.Group();
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.8, 1.3), new THREE.MeshStandardMaterial({map: woolTex}));
-            body.position.y = 0.7;
-            
-            // Cabeza con "Cara" pintada
-            const headCanvas = document.createElement('canvas');
-            headCanvas.width = 16; headCanvas.height = 16;
-            const hctx = headCanvas.getContext('2d');
-            hctx.fillStyle = '#ffffff'; hctx.fillRect(0,0,16,16);
-            hctx.fillStyle = '#000'; hctx.fillRect(3, 5, 2, 2); hctx.fillRect(11, 5, 2, 2); // Ojos
-            hctx.fillStyle = '#ff9999'; hctx.fillRect(6, 9, 4, 2); // Nariz
-            const headTex = new THREE.CanvasTexture(headCanvas);
-            headTex.magFilter = THREE.NearestFilter;
+        // --- ILUMINACIÓN DINÁMICA ---
+        const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+        sun.position.set(50, 100, 50);
+        sun.castShadow = true;
+        sun.shadow.mapSize.width = 2048;
+        sun.shadow.mapSize.height = 2048;
+        scene.add(sun, new THREE.AmbientLight(0xffffff, 0.5));
 
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({map: headTex}));
-            head.position.set(0, 1.1, 0.8);
+        // --- GENERADOR DE OVEJAS (REALISTA) ---
+        const entities = [];
+        function createSheep(x, y, z) {
+            const group = new THREE.Group();
+            const matWhite = new THREE.MeshStandardMaterial({map: getTexture('grass')}); // Reutilizo ruido blanco
+            matWhite.map.colorSpace = THREE.SRGBColorSpace;
+
+            // Cuerpo
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.7, 1.2), matWhite);
+            body.position.y = 0.6;
+            body.castShadow = true;
             
+            // Cabeza (SOLO LA CARA TIENE TEXTURA DE OJOS)
+            const faceMat = new THREE.MeshStandardMaterial({map: getTexture('sheep_face')});
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), [
+                matWhite, matWhite, matWhite, matWhite, faceMat, matWhite
+            ]);
+            head.position.set(0, 0.9, 0.7);
+            
+            // Patas
+            const legGeo = new THREE.BoxGeometry(0.15, 0.5, 0.15);
+            for(let i=0; i<4; i++) {
+                const leg = new THREE.Mesh(legGeo, new THREE.MeshStandardMaterial({color: 0xffdbac}));
+                leg.position.set(i<2?0.25:-0.25, 0.25, i%2?0.4:-0.4);
+                group.add(leg);
+            }
+
             group.add(body, head);
             group.position.set(x, y, z);
             scene.add(group);
-            return group;
+            entities.push({ mesh: group, timer: 0, vx: 0, vz: 0 });
         }
 
-        // --- ILUMINACIÓN ---
-        const sun = new THREE.DirectionalLight(0xffffff, 1.5);
-        sun.position.set(50, 100, 50);
-        sun.castShadow = true;
-        scene.add(sun, new THREE.AmbientLight(0xffffff, 0.5));
+        // --- TERRENO ---
+        const worldSize = 30;
+        const grassMat = new THREE.MeshStandardMaterial({ map: getTexture('grass') });
+        const getH = (x, z) => Math.floor(Math.sin(x*0.1)*3 + Math.cos(z*0.1)*2 + 5);
 
-        // --- GENERACIÓN ---
-        const getH = (x, z) => Math.floor(Math.sin(x*0.15)*3 + Math.cos(z*0.15)*2 + 4);
-        for(let x=-20; x<20; x++) {
-            for(let z=-20; z<20; z++) {
+        for(let x=-worldSize; x<worldSize; x++) {
+            for(let z=-worldSize; z<worldSize; z++) {
                 const y = getH(x, z);
-                const block = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({map: grassTex}));
+                const block = new THREE.Mesh(new THREE.BoxGeometry(0.99, 0.99, 0.99), grassMat);
                 block.position.set(x, y, z);
+                block.receiveShadow = true;
                 scene.add(block);
-                if(Math.random() < 0.01) createSheepPro(x, y+1, z);
+                if(Math.random() < 0.005) createSheep(x, y+1, z);
             }
         }
 
-        camera.position.set(0, 12, 5);
+        // --- MOVIMIENTO PROFESIONAL ---
+        let velocity = new THREE.Vector3();
+        let direction = new THREE.Vector3();
+        const keys = {};
+        window.onkeydown = (e) => keys[e.code] = true;
+        window.onkeyup = (e) => keys[e.code] = false;
+
+        camera.position.set(0, 20, 10);
+
+        function updatePhysics() {
+            if (!controls.isLocked) return;
+
+            const speed = 0.18; 
+            direction.z = Number(keys['KeyW']) - Number(keys['KeyS']);
+            direction.x = Number(keys['KeyD']) - Number(keys['KeyA']);
+            direction.normalize();
+
+            if (keys['KeyW'] || keys['KeyS']) velocity.z -= direction.z * speed;
+            if (keys['KeyA'] || keys['KeyD']) velocity.x -= direction.x * speed;
+
+            controls.moveRight(-velocity.x);
+            controls.moveForward(-velocity.z);
+            velocity.multiplyScalar(0.85); // Fricción
+
+            // Gravedad y Salto
+            velocity.y -= 0.012; 
+            camera.position.y += velocity.y;
+
+            const ground = getH(Math.round(camera.position.x), Math.round(camera.position.z)) + 1.8;
+            if (camera.position.y < ground) {
+                camera.position.y = ground;
+                velocity.y = 0;
+                if (keys['Space']) velocity.y = 0.25;
+            }
+        }
 
         function animate() {
             requestAnimationFrame(animate);
-            if(controls.isLocked) {
-                const speed = 0.2;
-                // Controles WASD omitidos por brevedad pero mantenidos igual...
-                const gy = getH(Math.round(camera.position.x), Math.round(camera.position.z)) + 1.8;
-                if(camera.position.y < gy) camera.position.y = gy;
-            }
+            updatePhysics();
+            
+            // IA Ovejas
+            entities.forEach(e => {
+                e.timer--;
+                if(e.timer <= 0) {
+                    e.vx = (Math.random()-0.5)*0.05;
+                    e.vz = (Math.random()-0.5)*0.05;
+                    e.timer = 100 + Math.random()*200;
+                }
+                e.mesh.position.x += e.vx;
+                e.mesh.position.z += e.vz;
+                if(Math.abs(e.vx) > 0) e.mesh.lookAt(e.mesh.position.x + e.vx*10, e.mesh.position.y, e.mesh.position.z + e.vz*10);
+            });
+
             renderer.render(scene, camera);
         }
         animate();
