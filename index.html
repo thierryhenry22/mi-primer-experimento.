@@ -2,104 +2,125 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Neural Rider Pro - Ultra Graphics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Rider - Snow Edition Pro</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
-        #ui { position: absolute; top: 20px; width: 100%; text-align: center; color: #06b6d4; font-size: 2rem; pointer-events: none; text-shadow: 0 0 15px #06b6d4; }
+        #ui { 
+            position: absolute; top: 30px; width: 100%; text-align: center; 
+            color: #06b6d4; font-size: 2.5rem; font-weight: bold;
+            text-shadow: 0 0 20px #06b6d4; pointer-events: none;
+        }
     </style>
 </head>
 <body>
-    <div id="ui">POTENCIA: <span id="speed">0</span>%</div>
+
+    <div id="ui">VELOCIDAD: <span id="speed">0</span> KM/H</div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
+        // --- ESCENA Y RENDER ---
         const scene = new THREE.Scene();
-        scene.fog = new THREE.Fog(0x000000, 10, 50);
+        scene.background = new THREE.Color(0x050505);
+        scene.fog = new THREE.Fog(0x050505, 15, 60);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        // --- DISEÑO DE LA MOTO (YA NO ES UN CUADRO) ---
-        const bikeGroup = new THREE.Group();
+        // --- LUCES ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        sunLight.position.set(5, 10, 7);
+        scene.add(sunLight);
 
-        // Chasis estilizado
-        const chassisGeo = new THREE.BoxGeometry(0.6, 0.4, 2);
-        const chassisMat = new THREE.MeshPhongMaterial({ color: 0x111111, shininess: 100 });
-        const chassis = new THREE.Mesh(chassisGeo, chassisMat);
-        bikeGroup.add(chassis);
+        // --- CARRETERA ---
+        const roadGeo = new THREE.PlaneGeometry(10, 1000);
+        const roadMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
+        const road = new THREE.Mesh(roadGeo, roadMat);
+        road.rotation.x = -Math.PI / 2;
+        scene.add(road);
 
-        // Rueda Trasera (Grande y Neón)
-        const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.5, 32);
-        const wheelMat = new THREE.MeshPhongMaterial({ color: 0x000000, emissive: 0x8b5cf6 });
-        const wheelBack = new THREE.Mesh(wheelGeo, wheelMat);
-        wheelBack.rotation.z = Math.PI / 2;
-        wheelBack.position.set(0, -0.1, 0.8);
-        bikeGroup.add(wheelBack);
+        // Línea central de la carretera
+        const lineGeo = new THREE.PlaneGeometry(0.2, 1000);
+        const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const line = new THREE.Mesh(lineGeo, lineMat);
+        line.rotation.x = -Math.PI / 2;
+        line.position.y = 0.01;
+        scene.add(line);
 
-        // Rueda Delantera
-        const wheelFront = wheelBack.clone();
-        wheelFront.scale.set(0.8, 0.8, 0.8);
-        wheelFront.position.set(0, -0.1, -0.8);
-        bikeGroup.add(wheelFront);
+        // --- NIEVE (SIN CUADRICULADO) ---
+        function createSnowSide(xPos) {
+            const snowGeo = new THREE.PlaneGeometry(50, 1000, 32, 32);
+            const pos = snowGeo.attributes.position.array;
+            for(let i = 0; i < pos.length; i+=3) {
+                pos[i+2] = Math.random() * 2; // Relieve suave
+            }
+            const snowMat = new THREE.MeshPhongMaterial({ color: 0xffffff, flatShining: true });
+            const snow = new THREE.Mesh(snowGeo, snowMat);
+            snow.rotation.x = -Math.PI / 2;
+            snow.position.set(xPos, -0.1, 0);
+            scene.add(snow);
+        }
+        createSnowSide(30);  // Derecha
+        createSnowSide(-30); // Izquierda
 
-        // Luz de Neón Lateral
-        const neonGeo = new THREE.BoxGeometry(0.7, 0.05, 1.8);
-        const neonMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
-        const neon = new THREE.Mesh(neonGeo, neonMat);
+        // --- ÁRBOLES ---
+        const trees = [];
+        function createTree(z) {
+            const treeGroup = new THREE.Group();
+            const trunkGeo = new THREE.CylinderGeometry(0.2, 0.2, 1);
+            const trunkMat = new THREE.MeshPhongMaterial({ color: 0x4d2600 });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            
+            const leavesGeo = new THREE.ConeGeometry(1.2, 3, 8);
+            const leavesMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+            leaves.position.y = 2;
+
+            treeGroup.add(trunk);
+            treeGroup.add(leaves);
+            treeGroup.position.set(Math.random() > 0.5 ? 8 : -8, 0.5, z);
+            scene.add(treeGroup);
+            trees.push(treeGroup);
+        }
+
+        for(let i = 0; i > -200; i -= 15) createTree(i);
+
+        // --- MOTO ---
+        const bike = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.5, 2), new THREE.MeshPhongMaterial({ color: 0x111111 }));
+        const neon = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.1, 1.8), new THREE.MeshBasicMaterial({ color: 0x8b5cf6 }));
         neon.position.y = 0.1;
-        bikeGroup.add(neon);
+        bike.add(body);
+        bike.add(neon);
+        scene.add(bike);
+        bike.position.y = 0.5;
 
-        scene.add(bikeGroup);
-        bikeGroup.position.y = 0.5;
+        // --- CÁMARA ---
+        camera.position.set(0, 3, 7);
 
-        // --- TERRENO GRID ---
-        const grid = new THREE.GridHelper(200, 50, 0x8b5cf6, 0x222222);
-        scene.add(grid);
-
-        // Luces ambiente
-        const light = new THREE.PointLight(0xffffff, 1, 100);
-        light.position.set(0, 10, 10);
-        scene.add(light);
-        scene.add(new THREE.AmbientLight(0x404040));
-
-        camera.position.set(0, 3, 6);
-
-        // --- LÓGICA ---
+        // --- CONTROLES Y ANIMACIÓN ---
         let keys = {};
-        window.onkeydown = (e) => keys[e.key] = true;
-        window.onkeyup = (e) => keys[e.key] = false;
+        window.addEventListener('keydown', (e) => keys[e.key] = true);
+        window.addEventListener('keyup', (e) => keys[e.key] = false);
 
+        let velocity = 0;
         function animate() {
             requestAnimationFrame(animate);
-            
-            let currentSpeed = 0;
-            if(keys["ArrowUp"]) currentSpeed = 0.5;
-            
-            // Movimiento lateral y rotación de cámara
-            if(keys["ArrowLeft"]) {
-                bikeGroup.position.x -= 0.15;
-                bikeGroup.rotation.z = 0.2;
-            } else if(keys["ArrowRight"]) {
-                bikeGroup.position.x += 0.15;
-                bikeGroup.rotation.z = -0.2;
-            } else {
-                bikeGroup.rotation.z *= 0.9;
-            }
 
-            // Efecto de cámara que sigue
-            camera.position.x += (bikeGroup.position.x - camera.position.x) * 0.05;
-            camera.lookAt(bikeGroup.position.x, 0, -10);
+            if(keys["ArrowUp"]) velocity += 0.005;
+            else velocity *= 0.98;
+            if(velocity > 0.8) velocity = 0.8;
 
-            grid.position.z += currentSpeed;
-            if(grid.position.z > 4) grid.position.z = 0;
+            if(keys["ArrowLeft"]) bike.position.x -= 0.1;
+            if(keys["ArrowRight"]) bike.position.x += 0.1;
 
-            document.getElementById('speed').innerText = keys["ArrowUp"] ? "100" : "0";
-
-            renderer.render(scene, camera);
-        }
-        animate();
-    </script>
-</body>
-</html>
+            // Mover mundo
+            road.position.z += velocity * 50;
+            line.position.z += velocity * 50;
+            if(road
