@@ -2,163 +2,104 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Neural Rider Pro - 3D Ultra</title>
+    <title>Neural Rider Pro - Ultra Graphics</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; }
-        #overlay {
-            position: absolute; top: 20px; width: 100%; text-align: center;
-            color: #06b6d4; font-size: 2rem; text-shadow: 0 0 15px #06b6d4;
-            pointer-events: none; letter-spacing: 4px;
-        }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
+        #ui { position: absolute; top: 20px; width: 100%; text-align: center; color: #06b6d4; font-size: 2rem; pointer-events: none; text-shadow: 0 0 15px #06b6d4; }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
 </head>
 <body>
-
-    <div id="overlay">VELOCIDAD: <span id="dist">0</span> KM/H</div>
-
+    <div id="ui">POTENCIA: <span id="speed">0</span>%</div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // --- CONFIGURACIÓN ESCENA ---
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x030712, 0.02); // Niebla para profundidad
+        scene.fog = new THREE.Fog(0x000000, 10, 50);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        // --- LUCES ---
-        const hemiLight = new THREE.HemisphereLight(0x404040, 0x030712, 1);
-        scene.add(hemiLight);
-
-        const pointLight = new THREE.PointLight(0x8b5cf6, 2, 50);
-        pointLight.position.set(0, 5, 5);
-        scene.add(pointLight);
-
-        // --- TERRENO (MONTAÑAS) ---
-        const planeGeo = new THREE.PlaneGeometry(100, 500, 64, 64);
-        // Deformar plano para crear montañas
-        const posArr = planeGeo.attributes.position.array;
-        for(let i = 0; i < posArr.length; i += 3) {
-            const x = posArr[i];
-            const y = posArr[i+1];
-            // Algoritmo simple de montañas
-            posArr[i+2] = Math.sin(x * 0.2) * Math.cos(y * 0.1) * 3 + Math.sin(y * 0.05) * 5;
-        }
-        planeGeo.computeVertexNormals();
-
-        const planeMat = new THREE.MeshPhongMaterial({ 
-            color: 0x111827, 
-            wireframe: true, // Estilo Grid Cyber
-            emissive: 0x06b6d4,
-            emissiveIntensity: 0.1
-        });
-
-        const floor = new THREE.Mesh(planeGeo, planeMat);
-        floor.rotation.x = -Math.PI / 2;
-        scene.add(floor);
-
-        // --- VEHÍCULO (MOTO CYBER) ---
+        // --- DISEÑO DE LA MOTO (YA NO ES UN CUADRO) ---
         const bikeGroup = new THREE.Group();
-        
-        // Cuerpo principal
-        const bodyGeo = new THREE.BoxGeometry(0.8, 0.5, 2);
-        const bodyMat = new THREE.MeshPhongMaterial({ color: 0x000000, emissive: 0x8b5cf6 });
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
-        bikeGroup.add(body);
 
-        // Luz trasera neón
-        const tailLightGeo = new THREE.BoxGeometry(0.7, 0.1, 0.1);
-        const tailLightMat = new THREE.MeshBasicMaterial({ color: 0xff0044 });
-        const tailLight = new THREE.Mesh(tailLightGeo, tailLightMat);
-        tailLight.position.set(0, 0, -1);
-        bikeGroup.add(tailLight);
+        // Chasis estilizado
+        const chassisGeo = new THREE.BoxGeometry(0.6, 0.4, 2);
+        const chassisMat = new THREE.MeshPhongMaterial({ color: 0x111111, shininess: 100 });
+        const chassis = new THREE.Mesh(chassisGeo, chassisMat);
+        bikeGroup.add(chassis);
+
+        // Rueda Trasera (Grande y Neón)
+        const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.5, 32);
+        const wheelMat = new THREE.MeshPhongMaterial({ color: 0x000000, emissive: 0x8b5cf6 });
+        const wheelBack = new THREE.Mesh(wheelGeo, wheelMat);
+        wheelBack.rotation.z = Math.PI / 2;
+        wheelBack.position.set(0, -0.1, 0.8);
+        bikeGroup.add(wheelBack);
+
+        // Rueda Delantera
+        const wheelFront = wheelBack.clone();
+        wheelFront.scale.set(0.8, 0.8, 0.8);
+        wheelFront.position.set(0, -0.1, -0.8);
+        bikeGroup.add(wheelFront);
+
+        // Luz de Neón Lateral
+        const neonGeo = new THREE.BoxGeometry(0.7, 0.05, 1.8);
+        const neonMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
+        const neon = new THREE.Mesh(neonGeo, neonMat);
+        neon.position.y = 0.1;
+        bikeGroup.add(neon);
 
         scene.add(bikeGroup);
-        bikeGroup.position.y = 1;
+        bikeGroup.position.y = 0.5;
 
-        // --- OBSTÁCULOS ---
-        let obsArr = [];
-        function spawnObs() {
-            const geo = new THREE.IcosahedronGeometry(1, 0);
-            const mat = new THREE.MeshPhongMaterial({ color: 0x06b6d4, wireframe: true });
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.position.set((Math.random() - 0.5) * 20, 1, -200);
-            scene.add(mesh);
-            obsArr.push(mesh);
-        }
+        // --- TERRENO GRID ---
+        const grid = new THREE.GridHelper(200, 50, 0x8b5cf6, 0x222222);
+        scene.add(grid);
 
-        // --- LÓGICA DE MOVIMIENTO ---
+        // Luces ambiente
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(0, 10, 10);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
+
+        camera.position.set(0, 3, 6);
+
+        // --- LÓGICA ---
         let keys = {};
         window.onkeydown = (e) => keys[e.key] = true;
         window.onkeyup = (e) => keys[e.key] = false;
 
-        let speed = 0;
-        let rotationTarget = 0;
-
         function animate() {
             requestAnimationFrame(animate);
-
-            // Aceleración y dirección
-            if(keys["ArrowUp"]) speed += 0.01;
-            else speed *= 0.98;
-
+            
+            let currentSpeed = 0;
+            if(keys["ArrowUp"]) currentSpeed = 0.5;
+            
+            // Movimiento lateral y rotación de cámara
             if(keys["ArrowLeft"]) {
                 bikeGroup.position.x -= 0.15;
-                bikeGroup.rotation.z = 0.3; // Inclinar moto
+                bikeGroup.rotation.z = 0.2;
             } else if(keys["ArrowRight"]) {
                 bikeGroup.position.x += 0.15;
-                bikeGroup.rotation.z = -0.3;
+                bikeGroup.rotation.z = -0.2;
             } else {
                 bikeGroup.rotation.z *= 0.9;
             }
 
-            // El terreno se mueve hacia atrás para simular avance infinito
-            floor.position.z += speed * 50;
-            if(floor.position.z > 100) floor.position.z = 0;
+            // Efecto de cámara que sigue
+            camera.position.x += (bikeGroup.position.x - camera.position.x) * 0.05;
+            camera.lookAt(bikeGroup.position.x, 0, -10);
 
-            // Mover obstáculos
-            obsArr.forEach((obs, i) => {
-                obs.position.z += speed * 50;
-                if(obs.position.z > 20) {
-                    scene.remove(obs);
-                    obsArr.splice(i, 1);
-                }
-                // Colisión simple
-                if(bikeGroup.position.distanceTo(obs.position) < 1.5) {
-                    speed = 0;
-                    alert("SISTEMA DAÑADO - REINICIANDO");
-                    location.reload();
-                }
-            });
+            grid.position.z += currentSpeed;
+            if(grid.position.z > 4) grid.position.z = 0;
 
-            if(Math.random() < 0.05) spawnObs();
-
-            // --- CÁMARA QUE SIGUE AL CARRO ---
-            // La cámara se mantiene detrás de la moto y se mueve con ella en el eje X
-            camera.position.x += (bikeGroup.position.x - camera.position.x) * 0.1;
-            camera.position.y = 4;
-            camera.position.z = bikeGroup.position.z + 6;
-            camera.lookAt(bikeGroup.position.x, 1, bikeGroup.position.z - 10);
-
-            // UI
-            document.getElementById('dist').innerText = Math.floor(speed * 1000);
+            document.getElementById('speed').innerText = keys["ArrowUp"] ? "100" : "0";
 
             renderer.render(scene, camera);
         }
-
         animate();
-
-        // Redimensionar
-        window.onresize = () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        };
     </script>
 </body>
 </html>
