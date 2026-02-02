@@ -2,30 +2,34 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>HENRY MANSION: PROCEDURAL GEN</title>
+    <title>HENRY MANSION: INVESTIGATION</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
-        #canvas-container { width: 100%; height: 100%; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
         #crosshair {
-            position: absolute; top: 50%; left: 50%; width: 12px; height: 12px;
-            border: 2px solid rgba(255,255,255,0.5); border-radius: 50%;
-            transform: translate(-50%, -50%); pointer-events: none;
+            position: absolute; top: 50%; left: 50%; width: 10px; height: 10px;
+            border: 1px solid rgba(255,255,255,0.8); border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none; z-index: 10;
         }
-        #ui-text {
-            position: absolute; bottom: 10%; width: 100%; text-align: center;
-            color: white; font-size: 1.5rem; letter-spacing: 2px;
-            text-shadow: 0 0 10px #000; pointer-events: none; opacity: 0; transition: 0.2s;
+        #hud {
+            position: absolute; top: 20px; left: 20px; color: #0f0; 
+            background: rgba(0,0,0,0.7); padding: 15px; border-left: 4px solid #0f0;
+            font-size: 14px; pointer-events: none;
         }
-        #inventory {
-            position: absolute; top: 20px; left: 20px; color: #aaa;
-            border-left: 3px solid #f00; padding-left: 15px; font-size: 0.9rem;
+        #interaction {
+            position: absolute; bottom: 15%; width: 100%; text-align: center;
+            color: white; font-size: 20px; text-transform: uppercase;
+            letter-spacing: 3px; opacity: 0; transition: 0.2s; pointer-events: none;
         }
     </style>
 </head>
 <body>
     <div id="crosshair"></div>
-    <div id="inventory">EXPEDIENTE: HENRY_01<br>PISTAS ENCONTRADAS: <span id="clues">0</span>/3</div>
-    <div id="ui-text">PRESIONA [E] PARA RECOGER PISTA</div>
+    <div id="hud">
+        ESTADO: INVESTIGACIÓN<br>
+        OBJETIVO: HALLAR 3 DOCUMENTOS<br>
+        PROGRESO: <span id="count">0</span>/3
+    </div>
+    <div id="interaction">PRESIONA [E] PARA ANALIZAR PISTA</div>
 
     <script type="importmap">
         {
@@ -40,123 +44,89 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-        // --- RENDERER PRO ---
+        // 1. ESCENA Y MOTOR PRO
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x050505, 0.12);
+        scene.fog = new THREE.FogExp2(0x050505, 0.15);
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         document.body.appendChild(renderer.domElement);
 
-        // --- GENERADOR DE TEXTURAS (Adiós a los errores de imagen) ---
-        function createWoodTexture() {
-            const canvas = document.createElement('canvas');
-            canvas.width = canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#3d2b1f';
-            ctx.fillRect(0,0,256,256);
-            for(let i=0; i<50; i++) {
-                ctx.fillStyle = `rgba(30,20,10,${Math.random()})`;
-                ctx.fillRect(Math.random()*256, 0, Math.random()*5, 256);
-            }
-            const tex = new THREE.CanvasTexture(canvas);
-            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-            return tex;
-        }
+        // 2. TEXTURAS PROCEDURALES (No fallan nunca)
+        const createTex = (c1, c2) => {
+            const can = document.createElement('canvas'); can.width = can.height = 256;
+            const ctx = can.getContext('2d');
+            ctx.fillStyle = c1; ctx.fillRect(0,0,256,256);
+            for(let i=0; i<100; i++) { ctx.fillStyle = c2; ctx.fillRect(Math.random()*256, Math.random()*256, 2, 2); }
+            return new THREE.CanvasTexture(can);
+        };
+        const floorTex = createTex('#1a1a1a', '#333333');
 
-        // --- CONSTRUCCIÓN DE LA MANSIÓN ---
-        const woodTex = createWoodTexture();
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
-        const floorMat = new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.6 });
-
-        // Suelo y Techo
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), floorMat);
+        // 3. CONSTRUCCIÓN (Unity Style)
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({map: floorTex}));
         floor.rotation.x = -Math.PI/2;
         scene.add(floor);
 
-        // Paredes
-        const wallGeo = new THREE.BoxGeometry(30, 6, 0.5);
-        const wall1 = new THREE.Mesh(wallGeo, wallMat);
-        wall1.position.set(0, 3, -15);
-        scene.add(wall1);
+        const wallMat = new THREE.MeshStandardMaterial({color: 0x111111, roughness: 1});
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(40, 10, 1), wallMat);
+        wall.position.set(0, 5, -20);
+        scene.add(wall);
 
-        // --- OBJETOS / PISTAS ---
-        const interactiveObjects = [];
-        function spawnClue(x, z, name) {
-            const group = new THREE.Group();
-            const paper = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.05, 0.6), new THREE.MeshStandardMaterial({color: 0xffffff}));
-            paper.position.y = 0.05;
-            group.add(paper);
-            group.position.set(x, 0, z);
-            group.userData = { name: name, isClue: true };
-            scene.add(group);
-            interactiveObjects.push(group);
-        }
+        // 4. PISTAS INTERACTIVAS
+        const clues = [];
+        const spawnClue = (x, z, label) => {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.7), new THREE.MeshStandardMaterial({color: 0xeeeeee, emissive: 0xffffff, emissiveIntensity: 0.1}));
+            mesh.position.set(x, 0.05, z);
+            mesh.userData = { label: label };
+            scene.add(mesh);
+            clues.push(mesh);
+        };
+        spawnClue(3, -5, "NOTA SUCIA");
+        spawnClue(-8, -12, "FOTO ANTIGUA");
+        spawnClue(0, -18, "DIARIO DE HENRY");
 
-        spawnClue(5, -5, "Carta de Despedida");
-        spawnClue(-3, -10, "Foto Rasgada");
-        spawnClue(0, -12, "Llave del Sótano");
+        // 5. LINTERNA Y LUCES
+        const light = new THREE.SpotLight(0xffffff, 30);
+        light.angle = 0.5; camera.add(light);
+        light.position.set(0,0,0.1); light.target.position.set(0,0,-1);
+        camera.add(light.target); scene.add(camera);
 
-        // --- ILUMINACIÓN ---
-        const ambient = new THREE.AmbientLight(0xffffff, 0.1);
-        scene.add(ambient);
-
-        const flashlight = new THREE.SpotLight(0xffeebb, 20);
-        flashlight.angle = Math.PI/6;
-        flashlight.penumbra = 0.5;
-        camera.add(flashlight);
-        flashlight.position.set(0,0,0.1);
-        flashlight.target.position.set(0,0,-1);
-        camera.add(flashlight.target);
-        scene.add(camera);
-
-        // --- INTERACCIÓN ---
+        // 6. CONTROLES Y RAYCAST
         const controls = new PointerLockControls(camera, document.body);
         document.body.onclick = () => controls.lock();
-
         const raycaster = new THREE.Raycaster();
-        const uiText = document.getElementById('ui-text');
-        let collected = 0;
+        let found = 0;
 
-        window.addEventListener('keydown', (e) => {
+        window.onkeydown = (e) => {
             if(e.code === 'KeyE') {
                 raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
-                const intersects = raycaster.intersectObjects(interactiveObjects, true);
-                if(intersects.length > 0) {
-                    const picked = intersects[0].object.parent;
-                    console.log("Recogido:", picked.userData.name);
-                    scene.remove(picked);
-                    collected++;
-                    document.getElementById('clues').innerText = collected;
-                    if(collected === 3) alert("TODAS LAS PISTAS RECOGIDAS. SAL DE LA CASA.");
+                const hit = raycaster.intersectObjects(clues);
+                if(hit.length > 0) {
+                    const obj = hit[0].object;
+                    scene.remove(obj);
+                    clues.splice(clues.indexOf(obj), 1);
+                    found++;
+                    document.getElementById('count').innerText = found;
+                    if(found === 3) alert("TODAS LAS PISTAS RECOGIDAS.");
                 }
             }
-        });
+        };
 
-        // --- MOVIMIENTO ---
-        let input = { f:0, s:0 };
+        let move = { f:0, s:0 };
         document.onkeydown = (e) => {
-            if(e.code === 'KeyW') input.f = 1;
-            if(e.code === 'KeyS') input.f = -1;
-            if(e.code === 'KeyA') input.s = -1;
-            if(e.code === 'KeyD') input.s = 1;
+            if(e.code === 'KeyW') move.f = 0.12; if(e.code === 'KeyS') move.f = -0.12;
+            if(e.code === 'KeyA') move.s = -0.12; if(e.code === 'KeyD') move.s = 0.12;
+            if(e.code === 'KeyE') window.onkeydown({code: 'KeyE'}); // Trigger interacción
         };
-        document.onkeyup = (e) => {
-            if(['KeyW','KeyS'].includes(e.code)) input.f = 0;
-            if(['KeyA','KeyD'].includes(e.code)) input.s = 0;
-        };
+        document.onkeyup = (e) => { if(['KeyW','KeyS'].includes(e.code)) move.f = 0; if(['KeyA','KeyD'].includes(e.code)) move.s = 0; };
 
         function animate() {
             requestAnimationFrame(animate);
             if(controls.isLocked) {
-                controls.moveForward(input.f * 0.1);
-                controls.moveRight(input.s * 0.1);
-
-                // Raycast para HUD
+                controls.moveForward(move.f); controls.moveRight(move.s);
                 raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
-                const intersects = raycaster.intersectObjects(interactiveObjects, true);
-                uiText.style.opacity = intersects.length > 0 ? "1" : "0";
+                document.getElementById('interaction').style.opacity = raycaster.intersectObjects(clues).length > 0 ? "1" : "0";
             }
             renderer.render(scene, camera);
         }
