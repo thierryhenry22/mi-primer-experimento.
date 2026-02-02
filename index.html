@@ -2,34 +2,29 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>HENRY MANSION: INVESTIGATION</title>
+    <title>HENRY MANSION: MYSTERY ENGINE</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
+        body { margin: 0; overflow: hidden; background: #050505; font-family: 'Segoe UI', sans-serif; }
         #crosshair {
-            position: absolute; top: 50%; left: 50%; width: 10px; height: 10px;
-            border: 1px solid rgba(255,255,255,0.8); border-radius: 50%;
-            transform: translate(-50%, -50%); pointer-events: none; z-index: 10;
+            position: absolute; top: 50%; left: 50%; width: 4px; height: 4px;
+            background: white; border-radius: 50%; transform: translate(-50%, -50%);
+            mix-blend-mode: difference; z-index: 10;
         }
-        #hud {
-            position: absolute; top: 20px; left: 20px; color: #0f0; 
-            background: rgba(0,0,0,0.7); padding: 15px; border-left: 4px solid #0f0;
-            font-size: 14px; pointer-events: none;
+        #ui-layer {
+            position: absolute; bottom: 40px; width: 100%; text-align: center;
+            color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); pointer-events: none;
         }
-        #interaction {
-            position: absolute; bottom: 15%; width: 100%; text-align: center;
-            color: white; font-size: 20px; text-transform: uppercase;
-            letter-spacing: 3px; opacity: 0; transition: 0.2s; pointer-events: none;
+        #hint-text { font-size: 1.2rem; font-weight: 300; letter-spacing: 1px; opacity: 0; transition: opacity 0.3s; }
+        #inventory {
+            position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.5);
+            padding: 15px; border: 1px solid rgba(255,255,255,0.2); color: #ccc; font-size: 0.8rem;
         }
     </style>
 </head>
 <body>
     <div id="crosshair"></div>
-    <div id="hud">
-        ESTADO: INVESTIGACIÓN<br>
-        OBJETIVO: HALLAR 3 DOCUMENTOS<br>
-        PROGRESO: <span id="count">0</span>/3
-    </div>
-    <div id="interaction">PRESIONA [E] PARA ANALIZAR PISTA</div>
+    <div id="inventory">PISTAS: <span id="clue-count">0/3</span></div>
+    <div id="ui-layer"><div id="hint-text">PRESIONA [E] PARA REVISAR</div></div>
 
     <script type="importmap">
         {
@@ -44,90 +39,110 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-        // 1. ESCENA Y MOTOR PRO
+        // --- MOTOR DE RENDERIZADO (ESTILO UNITY) ---
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x050505, 0.15);
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        scene.background = new THREE.Color(0x0a0a0c);
+        scene.fog = new THREE.FogExp2(0x0a0a0c, 0.1);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping; // Look profesional de Unity
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
         document.body.appendChild(renderer.domElement);
 
-        // 2. TEXTURAS PROCEDURALES (No fallan nunca)
-        const createTex = (c1, c2) => {
-            const can = document.createElement('canvas'); can.width = can.height = 256;
-            const ctx = can.getContext('2d');
-            ctx.fillStyle = c1; ctx.fillRect(0,0,256,256);
-            for(let i=0; i<100; i++) { ctx.fillStyle = c2; ctx.fillRect(Math.random()*256, Math.random()*256, 2, 2); }
-            return new THREE.CanvasTexture(can);
-        };
-        const floorTex = createTex('#1a1a1a', '#333333');
+        // --- CONTROLES DE PRIMERA PERSONA ---
+        const controls = new PointerLockControls(camera, document.body);
+        document.addEventListener('click', () => controls.lock());
 
-        // 3. CONSTRUCCIÓN (Unity Style)
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({map: floorTex}));
+        // --- ARQUITECTURA DE LA CASA (Misterio) ---
+        const texLoader = new THREE.TextureLoader();
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.9 });
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a110a, roughness: 0.7, metalness: 0.1 });
+
+        // Habitación principal
+        const room = new THREE.Group();
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), floorMat);
         floor.rotation.x = -Math.PI/2;
-        scene.add(floor);
+        room.add(floor);
 
-        const wallMat = new THREE.MeshStandardMaterial({color: 0x111111, roughness: 1});
-        const wall = new THREE.Mesh(new THREE.BoxGeometry(40, 10, 1), wallMat);
-        wall.position.set(0, 5, -20);
-        scene.add(wall);
+        const createWall = (w, h, d, x, y, z) => {
+            const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+            wall.position.set(x, y, z);
+            room.add(wall);
+        };
+        createWall(20, 5, 0.5, 0, 2.5, -10); // Pared fondo
+        createWall(0.5, 5, 20, -10, 2.5, 0); // Pared izq
+        scene.add(room);
 
-        // 4. PISTAS INTERACTIVAS
+        // --- OBJETOS DE PISTA (Interactuables) ---
         const clues = [];
-        const spawnClue = (x, z, label) => {
-            const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.7), new THREE.MeshStandardMaterial({color: 0xeeeeee, emissive: 0xffffff, emissiveIntensity: 0.1}));
-            mesh.position.set(x, 0.05, z);
-            mesh.userData = { label: label };
+        const createClue = (color, x, z, name) => {
+            const geo = new THREE.BoxGeometry(0.5, 0.8, 0.1);
+            const mat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.2 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, 1.2, z);
+            mesh.userData = { name: name, type: 'clue' };
             scene.add(mesh);
             clues.push(mesh);
         };
-        spawnClue(3, -5, "NOTA SUCIA");
-        spawnClue(-8, -12, "FOTO ANTIGUA");
-        spawnClue(0, -18, "DIARIO DE HENRY");
 
-        // 5. LINTERNA Y LUCES
-        const light = new THREE.SpotLight(0xffffff, 30);
-        light.angle = 0.5; camera.add(light);
-        light.position.set(0,0,0.1); light.target.position.set(0,0,-1);
-        camera.add(light.target); scene.add(camera);
+        createClue(0x886644, 2, -9.5, "Diario Viejo");
+        createClue(0x446688, -9.5, -2, "Llave de Plata");
 
-        // 6. CONTROLES Y RAYCAST
-        const controls = new PointerLockControls(camera, document.body);
-        document.body.onclick = () => controls.lock();
+        // --- ILUMINACIÓN VOLUMÉTRICA ---
+        const ambient = new THREE.AmbientLight(0x404040, 0.5);
+        scene.add(ambient);
+
+        const pointLight = new THREE.PointLight(0xffaa66, 15, 10);
+        pointLight.position.set(0, 3, 0);
+        scene.add(pointLight);
+
+        // --- SISTEMA DE INTERACCIÓN (RAYCASTER) ---
         const raycaster = new THREE.Raycaster();
-        let found = 0;
+        const hintUI = document.getElementById('hint-text');
+        let currentClueCount = 0;
 
-        window.onkeydown = (e) => {
-            if(e.code === 'KeyE') {
-                raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
-                const hit = raycaster.intersectObjects(clues);
-                if(hit.length > 0) {
-                    const obj = hit[0].object;
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'KeyE') {
+                raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+                const intersects = raycaster.intersectObjects(clues);
+                if (intersects.length > 0) {
+                    const obj = intersects[0].object;
+                    alert("Has encontrado: " + obj.userData.name);
                     scene.remove(obj);
-                    clues.splice(clues.indexOf(obj), 1);
-                    found++;
-                    document.getElementById('count').innerText = found;
-                    if(found === 3) alert("TODAS LAS PISTAS RECOGIDAS.");
+                    currentClueCount++;
+                    document.getElementById('clue-count').innerText = `${currentClueCount}/3`;
                 }
             }
-        };
+        });
 
-        let move = { f:0, s:0 };
+        // --- MOVIMIENTO ---
+        let move = { f: 0, s: 0 };
         document.onkeydown = (e) => {
-            if(e.code === 'KeyW') move.f = 0.12; if(e.code === 'KeyS') move.f = -0.12;
-            if(e.code === 'KeyA') move.s = -0.12; if(e.code === 'KeyD') move.s = 0.12;
-            if(e.code === 'KeyE') window.onkeydown({code: 'KeyE'}); // Trigger interacción
+            if(e.code === 'KeyW') move.f = 0.1;
+            if(e.code === 'KeyS') move.f = -0.1;
+            if(e.code === 'KeyA') move.s = -0.1;
+            if(e.code === 'KeyD') move.s = 0.1;
         };
-        document.onkeyup = (e) => { if(['KeyW','KeyS'].includes(e.code)) move.f = 0; if(['KeyA','KeyD'].includes(e.code)) move.s = 0; };
+        document.onkeyup = (e) => {
+            if(['KeyW','KeyS'].includes(e.code)) move.f = 0;
+            if(['KeyA','KeyD'].includes(e.code)) move.s = 0;
+        };
 
         function animate() {
             requestAnimationFrame(animate);
-            if(controls.isLocked) {
-                controls.moveForward(move.f); controls.moveRight(move.s);
-                raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
-                document.getElementById('interaction').style.opacity = raycaster.intersectObjects(clues).length > 0 ? "1" : "0";
+
+            if (controls.isLocked) {
+                controls.moveForward(move.f);
+                controls.moveRight(move.s);
+
+                // Check interactuable con Raycaster cada frame
+                raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+                const intersects = raycaster.intersectObjects(clues);
+                hintUI.style.opacity = intersects.length > 0 ? "1" : "0";
             }
+
             renderer.render(scene, camera);
         }
         animate();
