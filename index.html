@@ -2,152 +2,84 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>HENRY MANSION: MYSTERY ENGINE</title>
-    <style>
-        body { margin: 0; overflow: hidden; background: #050505; font-family: 'Segoe UI', sans-serif; }
-        #crosshair {
-            
-            position: absolute; top: 50%; left: 50%; width: 4px; height: 4px;
-            background: white; border-radius: 50%; transform: translate(-50%, -50%);
-            mix-blend-mode: difference; z-index: 10;
-       
-        }
-        #ui-layer {
-            position: absolute; bottom: 40px; width: 100%; text-align: center;
-            color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); pointer-events: none;
-        }
-        #hint-text { font-size: 1.2rem; font-weight: 300; letter-spacing: 1px; opacity: 0; transition: opacity 0.3s; }
-        #inventory {
-            position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.5);
-            padding: 15px; border: 1px solid rgba(255,255,255,0.2); color: #ccc; font-size: 0.8rem;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/modulo1/PM1-maccari78/styles/reset.css">
+    <link rel="stylesheet" href="/modulo1/PM1-maccari78/styles/styles.css">
+    <link rel="icon" href="/modulo1/PM1-maccari78/assets/images/html-5_5968267.png">
+    <title>Portafolio - Danilo Maccari</title>
 </head>
 <body>
-    <div id="crosshair"></div>
-    <div id="inventory">PISTAS: <span id="clue-count">0/3</span></div>
-    <div id="ui-layer"><div id="hint-text">PRESIONA [E] PARA REVISAR</div></div>
+    <header>
+        <h1>Danilo Maccari</h1>
+    </header>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
+    <nav>
+        <ul>
+            <li><a href="#acercaDe">Acerca de mí</a></li>
+            <li><a href="#tecnologias">Tecnologías</a></li>
+            <li><a href="#favActivities">Actividades</a></li>
+            <li><a href="https://www.linkedin.com/in/maccari78/" target="_blank">LinkedIn</a></li>
+            <li><a href="https://github.com/maccari78" target="_blank">Github</a></li>
+        </ul>
+    </nav>
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+    <main>
+        <section id="acercaDe">
+            <h2>Acerca de mí</h2><br>
+            <p>Desde 2006 soy Soporte TI y desde 2011 realizo cursos de desarrollo de software. Soy Técnico Superior en Computación y cuento con 4 años de estudio formal de inglés.</p>
+        </section>
 
-        // --- MOTOR DE RENDERIZADO (ESTILO UNITY) ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0a0c);
-        scene.fog = new THREE.FogExp2(0x0a0a0c, 0.1);
+        <section id="tecnologias">
+            <h2>Tecnologías favoritas</h2><br>
+            <ul>
+                <li>
+                    <h3><a href="https://developer.mozilla.org/es/docs/Web/HTML" target="_blank">HTML</a></h3>
+                    <img src="/modulo1/PM1-maccari78/assets/images/html_logo.png" alt="HTML_Logo">
+                </li>
+                <li>
+                    <h3><a href="https://developer.mozilla.org/es/docs/Web/CSS" target="_blank">CSS</a></h3>
+                    <img src="/modulo1/PM1-maccari78/assets/images/css_logo.png" alt="CSS_Logo">
+                </li>
+                <li>
+                    <h3><a href="https://developer.mozilla.org/es/docs/Web/JavaScript" target="_blank">JavaScript</a></h3>
+                    <img src="/modulo1/PM1-maccari78/assets/images/js_logo.png" alt="JavaScript_Logo">
+                </li>
+            </ul>
+            <h2>Tecnologías que me gustaría aprender</h2><br>
+            <ul>
+                <li>
+                    <h3><a href="https://nextjs.org/" target="_blank">Next.js</a></h3>
+                    <img src="/modulo1/PM1-maccari78/assets/images/nextjs_logo.png" alt="NextJS_Logo">
+                </li>
+                <li>
+                    <h3><a href="https://nestjs.com/" target="_blank">Nest.js</a></h3>
+                    <img src="/modulo1/PM1-maccari78/assets/images/nestjs_logo.png" alt="NestJS_Logo">
+                </li>
+            </ul>
+        </section>
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.toneMapping = THREE.ACESFilmicToneMapping; // Look profesional de Unity
-        renderer.outputColorSpace = THREE.SRGBColorSpace;
-        document.body.appendChild(renderer.domElement);
+        <section id="favActivities">
+            <h2>Mis Actividades Favoritas</h2><br>
+            <form id="form">
+                <label for="text">Título:</label>
+                <input type="text" id="text" placeholder="Leer" required><br><br>
+                <label for="description">Descripción:</label>
+                <textarea id="description" rows="2" placeholder="Me gusta la lectura, en particular el género de misterio" required>
+                </textarea><br><br>
+                <label for="imgUrl">URL de la imagen:</label>
+                <input type="url" id="imgUrl" placeholder="https://google.com" required><br><br>
+                <input type="submit" value="Enviar">
+            </form><br>
+            <div id="activity-container">
+                <ul id="activity-list"></ul>
+            </div><br>
+        </section>
+    </main>
 
-        // --- CONTROLES DE PRIMERA PERSONA ---
-        const controls = new PointerLockControls(camera, document.body);
-        document.addEventListener('click', () => controls.lock());
+    <footer>
+        <p>Hecho por maccari78. Todos los derechos reservados &copy; 2024</p>
+    </footer>
 
-        // --- ARQUITECTURA DE LA CASA (Misterio) ---
-        const texLoader = new THREE.TextureLoader();
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.9 });
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a110a, roughness: 0.7, metalness: 0.1 });
-
-        // Habitación principal
-        const room = new THREE.Group();
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), floorMat);
-        floor.rotation.x = -Math.PI/2;
-        room.add(floor);
-
-        const createWall = (w, h, d, x, y, z) => {
-            const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
-            wall.position.set(x, y, z);
-            room.add(wall);
-        };
-        createWall(20, 5, 0.5, 0, 2.5, -10); // Pared fondo
-        createWall(0.5, 5, 20, -10, 2.5, 0); // Pared izq
-        scene.add(room);
-
-        // --- OBJETOS DE PISTA (Interactuables) ---
-        const clues = [];
-        const createClue = (color, x, z, name) => {
-            const geo = new THREE.BoxGeometry(0.5, 0.8, 0.1);
-            const mat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.2 });
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.position.set(x, 1.2, z);
-            mesh.userData = { name: name, type: 'clue' };
-            scene.add(mesh);
-            clues.push(mesh);
-        };
-
-        createClue(0x886644, 2, -9.5, "Diario Viejo");
-        createClue(0x446688, -9.5, -2, "Llave de Plata");
-
-        // --- ILUMINACIÓN VOLUMÉTRICA ---
-        const ambient = new THREE.AmbientLight(0x404040, 0.5);
-        scene.add(ambient);
-
-        const pointLight = new THREE.PointLight(0xffaa66, 15, 10);
-        pointLight.position.set(0, 3, 0);
-        scene.add(pointLight);
-
-        // --- SISTEMA DE INTERACCIÓN (RAYCASTER) ---
-        const raycaster = new THREE.Raycaster();
-        const hintUI = document.getElementById('hint-text');
-        let currentClueCount = 0;
-
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'KeyE') {
-                raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-                const intersects = raycaster.intersectObjects(clues);
-                if (intersects.length > 0) {
-                    const obj = intersects[0].object;
-                    alert("Has encontrado: " + obj.userData.name);
-                    scene.remove(obj);
-                    currentClueCount++;
-                    document.getElementById('clue-count').innerText = `${currentClueCount}/3`;
-                }
-            }
-        });
-
-        // --- MOVIMIENTO ---
-        let move = { f: 0, s: 0 };
-        document.onkeydown = (e) => {
-            if(e.code === 'KeyW') move.f = 0.1;
-            if(e.code === 'KeyS') move.f = -0.1;
-            if(e.code === 'KeyA') move.s = -0.1;
-            if(e.code === 'KeyD') move.s = 0.1;
-        };
-        document.onkeyup = (e) => {
-            if(['KeyW','KeyS'].includes(e.code)) move.f = 0;
-            if(['KeyA','KeyD'].includes(e.code)) move.s = 0;
-        };
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            if (controls.isLocked) {
-                controls.moveForward(move.f);
-                controls.moveRight(move.s);
-
-                // Check interactuable con Raycaster cada frame
-                raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-                const intersects = raycaster.intersectObjects(clues);
-                hintUI.style.opacity = intersects.length > 0 ? "1" : "0";
-            }
-
-            renderer.render(scene, camera);
-        }
-        animate();
-    </script>
+    <script src="/modulo1/PM1-maccari78/scripts/scripts.js"></script>
 </body>
 </html>
